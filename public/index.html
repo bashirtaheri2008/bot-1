@@ -103,8 +103,6 @@
         .btn-dark:hover { background: #064a42; }
         .btn-danger { background: #dc3545; color: white; }
         .btn-danger:hover { background: #c82333; }
-        .btn-warning { background: #ff9800; color: white; }
-        .btn-warning:hover { background: #e68900; }
         .btn-sm { padding: 8px 15px; font-size: 13px; width: auto; }
         
         .divider {
@@ -165,8 +163,15 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         .dash-header h1 { font-size: 18px; }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
         .badge {
             padding: 6px 15px;
             border-radius: 15px;
@@ -174,6 +179,18 @@
             font-weight: bold;
             background: #25d366;
         }
+        
+        .toggle-btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            font-family: inherit;
+        }
+        .toggle-btn.active { background: #25d366; color: white; }
+        .toggle-btn.inactive { background: #dc3545; color: white; }
         
         .tabs {
             display: flex;
@@ -275,18 +292,6 @@
         .business-option .title { font-weight: bold; color: #075e54; margin-bottom: 5px; }
         .business-option .desc { font-size: 12px; color: #6c757d; }
         
-        .toggle-btn {
-            padding: 10px 30px;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            font-family: inherit;
-        }
-        .toggle-btn.active { background: #25d366; color: white; }
-        .toggle-btn.inactive { background: #dc3545; color: white; }
-        
         @media (min-width: 768px) {
             .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         }
@@ -340,7 +345,10 @@
     <div class="dashboard" id="dashboard">
         <div class="dash-header">
             <h1>🤖 داشبورد ربات</h1>
-            <span class="badge">متصل</span>
+            <div class="header-actions">
+                <button class="toggle-btn active" id="botToggleBtn" onclick="toggleBot()">ربات روشن ✅</button>
+                <span class="badge">متصل</span>
+            </div>
         </div>
         
         <div class="tabs">
@@ -479,6 +487,7 @@
         const socket = io();
         let msgCount = 0;
         let checkActive = false;
+        let botEnabled = true;
         
         document.getElementById('pinInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') verifyPin();
@@ -498,6 +507,7 @@
                     checkConnection();
                     loadAutoReplies();
                     loadProducts();
+                    loadBotStatus();
                 } else {
                     alert('❌ PIN اشتباه است');
                     document.getElementById('pinInput').value = '';
@@ -532,9 +542,37 @@
         function switchTab(tabName) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            
             document.getElementById('tab-' + tabName).classList.add('active');
             event.target.classList.add('active');
+        }
+        
+        // 🔌 خاموش/روشن کل ربات
+        async function loadBotStatus() {
+            const res = await fetch('/get-bot-status');
+            const data = await res.json();
+            botEnabled = data.enabled;
+            updateBotToggleBtn();
+        }
+        
+        function updateBotToggleBtn() {
+            const btn = document.getElementById('botToggleBtn');
+            if (botEnabled) {
+                btn.textContent = 'ربات روشن ✅';
+                btn.className = 'toggle-btn active';
+            } else {
+                btn.textContent = 'ربات خاموش ❌';
+                btn.className = 'toggle-btn inactive';
+            }
+        }
+        
+        async function toggleBot() {
+            botEnabled = !botEnabled;
+            updateBotToggleBtn();
+            await fetch('/toggle-bot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled: botEnabled })
+            });
         }
         
         // 💱 چک فیش
@@ -554,15 +592,14 @@
             const res = await fetch('/get-check-config');
             const config = await res.json();
             checkActive = config.active;
-            updateToggleBtn();
+            updateCheckToggleBtn();
             document.getElementById('groupSelect').value = config.groupJid || '';
-            
             if (config.targetJid) {
                 document.getElementById('targetNumber').value = config.targetJid.replace('@c.us', '');
             }
         }
         
-        function updateToggleBtn() {
+        function updateCheckToggleBtn() {
             const btn = document.getElementById('checkToggleBtn');
             if (checkActive) {
                 btn.textContent = 'فعال ✅';
@@ -575,7 +612,7 @@
         
         async function toggleCheck() {
             checkActive = !checkActive;
-            updateToggleBtn();
+            updateCheckToggleBtn();
             await fetch('/toggle-check', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -596,8 +633,6 @@
                     groupSelect.appendChild(opt);
                 });
             }
-            
-            // اعمال مقدار ذخیره شده
             const configRes = await fetch('/get-check-config');
             const config = await configRes.json();
             groupSelect.value = config.groupJid || '';
@@ -607,15 +642,8 @@
             const groupJid = document.getElementById('groupSelect').value;
             const targetNumber = document.getElementById('targetNumber').value.trim();
             
-            if (!groupJid) {
-                alert('لطفاً گروه را انتخاب کنید');
-                return;
-            }
-            
-            if (!targetNumber) {
-                alert('لطفاً شماره صاحب کارت را وارد کنید');
-                return;
-            }
+            if (!groupJid) { alert('لطفاً گروه را انتخاب کنید'); return; }
+            if (!targetNumber) { alert('لطفاً شماره صاحب کارت را وارد کنید'); return; }
             
             const targetJid = targetNumber.includes('@c.us') ? targetNumber : `${targetNumber}@c.us`;
             
@@ -625,9 +653,7 @@
                 body: JSON.stringify({ active: checkActive, groupJid, targetJid })
             });
             const data = await res.json();
-            if (data.success) {
-                alert('✅ تنظیمات ذخیره شد');
-            }
+            if (data.success) alert('✅ تنظیمات ذخیره شد');
         }
         
         // 🛍️ فروشگاه
@@ -660,7 +686,6 @@
                 .then(r => r.json())
                 .then(data => {
                     const list = document.getElementById('productsList');
-                    
                     if (data.products && data.products.length > 0) {
                         list.innerHTML = '';
                         data.products.forEach(product => {
@@ -687,9 +712,7 @@
                 body: JSON.stringify({ name })
             })
             .then(r => r.json())
-            .then(data => {
-                if (data.success) loadProducts();
-            });
+            .then(data => { if (data.success) loadProducts(); });
         }
         
         // 🤖 پاسخ خودکار
@@ -720,7 +743,6 @@
                 .then(r => r.json())
                 .then(data => {
                     const list = document.getElementById('autoReplyList');
-                    
                     if (data.replies && data.replies.length > 0) {
                         list.innerHTML = '';
                         data.replies.forEach(reply => {
@@ -746,9 +768,7 @@
                 body: JSON.stringify({ keyword })
             })
             .then(r => r.json())
-            .then(data => {
-                if (data.success) loadAutoReplies();
-            });
+            .then(data => { if (data.success) loadAutoReplies(); });
         }
         
         // 🔐 PIN
