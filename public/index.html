@@ -240,7 +240,7 @@
         .msg .sender { font-weight: bold; color: #075e54; }
         .msg .time { color: #6c757d; font-size: 11px; float: left; }
         
-        .auto-reply-item {
+        .auto-reply-item, .product-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -249,8 +249,9 @@
             border-radius: 8px;
             margin-bottom: 5px;
         }
-        .auto-reply-item .keyword { font-weight: bold; color: #075e54; }
+        .auto-reply-item .keyword, .product-item .name { font-weight: bold; color: #075e54; }
         .auto-reply-item .response { color: #6c757d; font-size: 13px; }
+        .product-item .price { color: #ff9800; font-weight: bold; }
         
         .business-options {
             display: grid;
@@ -274,29 +275,17 @@
         .business-option .title { font-weight: bold; color: #075e54; margin-bottom: 5px; }
         .business-option .desc { font-size: 12px; color: #6c757d; }
         
-        .rate-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin-bottom: 5px;
+        .toggle-btn {
+            padding: 10px 30px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            font-family: inherit;
         }
-        .rate-item .currency { font-weight: bold; color: #075e54; }
-        .rate-item .rate { color: #25d366; font-weight: bold; }
-        
-        .product-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin-bottom: 5px;
-        }
-        .product-item .name { font-weight: bold; color: #075e54; }
-        .product-item .price { color: #ff9800; font-weight: bold; }
+        .toggle-btn.active { background: #25d366; color: white; }
+        .toggle-btn.inactive { background: #dc3545; color: white; }
         
         @media (min-width: 768px) {
             .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
@@ -413,10 +402,10 @@
                 <p style="color: #6c757d; margin-bottom: 15px;">نوع کسب و کار خود را انتخاب کنید</p>
                 
                 <div class="business-options">
-                    <div class="business-option" onclick="showExchange()">
+                    <div class="business-option" onclick="showCheckReceipt()">
                         <div class="icon">💱</div>
-                        <div class="title">صرافی</div>
-                        <div class="desc">مدیریت نرخ ارز و معاملات</div>
+                        <div class="title">چک فیش</div>
+                        <div class="desc">مدیریت فیش‌های واریزی</div>
                     </div>
                     <div class="business-option" onclick="showShop()">
                         <div class="icon">🛍️</div>
@@ -426,21 +415,30 @@
                 </div>
             </div>
             
-            <!-- بخش صرافی -->
-            <div class="card" id="exchangeSection" style="display: none;">
-                <h2>💱 مدیریت صرافی</h2>
+            <!-- بخش چک فیش -->
+            <div class="card" id="checkSection" style="display: none;">
+                <h2>💱 چک فیش</h2>
                 
-                <h3>افزودن نرخ جدید</h3>
-                <div class="grid-2">
-                    <input type="text" class="input" id="currencyName" placeholder="نام ارز (مثلاً: دلار)">
-                    <input type="number" class="input" id="currencyRate" placeholder="نرخ (مثلاً: 72.5)">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: bold;">وضعیت:</label>
+                    <button class="toggle-btn inactive" id="checkToggleBtn" onclick="toggleCheck()">غیرفعال ❌</button>
                 </div>
-                <button class="btn btn-primary" onclick="addRate()">➕ افزودن نرخ</button>
                 
-                <h3 style="margin-top: 15px;">نرخ‌های فعلی</h3>
-                <div id="ratesList">
-                    <p style="color: #6c757d; font-size: 13px;">نرخی ثبت نشده</p>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">گروه دریافت فیش‌ها:</label>
+                    <select id="groupSelect" class="input">
+                        <option value="">انتخاب گروه...</option>
+                    </select>
                 </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">شخص تأییدکننده (صاحب کارت):</label>
+                    <select id="contactSelect" class="input">
+                        <option value="">انتخاب مخاطب...</option>
+                    </select>
+                </div>
+                
+                <button class="btn btn-primary" onclick="saveCheckConfig()">💾 ذخیره تنظیمات</button>
             </div>
             
             <!-- بخش فروشگاه -->
@@ -482,6 +480,7 @@
     <script>
         const socket = io();
         let msgCount = 0;
+        let checkActive = false;
         
         document.getElementById('pinInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') verifyPin();
@@ -500,7 +499,6 @@
                 if (data.success) {
                     checkConnection();
                     loadAutoReplies();
-                    loadRates();
                     loadProducts();
                 } else {
                     alert('❌ PIN اشتباه است');
@@ -541,74 +539,106 @@
             event.target.classList.add('active');
         }
         
-        function showExchange() {
-            document.getElementById('exchangeSection').style.display = 'block';
+        // 💱 چک فیش
+        function showCheckReceipt() {
+            document.getElementById('checkSection').style.display = 'block';
             document.getElementById('shopSection').style.display = 'none';
+            loadCheckConfig();
+            loadGroupsAndContacts();
         }
         
         function showShop() {
             document.getElementById('shopSection').style.display = 'block';
-            document.getElementById('exchangeSection').style.display = 'none';
+            document.getElementById('checkSection').style.display = 'none';
         }
         
-        // صرافی
-        function addRate() {
-            const name = document.getElementById('currencyName').value;
-            const rate = document.getElementById('currencyRate').value;
-            
-            if (!name || !rate) return alert('نام ارز و نرخ را وارد کنید');
-            
-            fetch('/add-rate', {
+        async function loadCheckConfig() {
+            const res = await fetch('/get-check-config');
+            const config = await res.json();
+            checkActive = config.active;
+            updateToggleBtn();
+            document.getElementById('groupSelect').value = config.groupJid || '';
+            document.getElementById('contactSelect').value = config.targetJid || '';
+        }
+        
+        function updateToggleBtn() {
+            const btn = document.getElementById('checkToggleBtn');
+            if (checkActive) {
+                btn.textContent = 'فعال ✅';
+                btn.className = 'toggle-btn active';
+            } else {
+                btn.textContent = 'غیرفعال ❌';
+                btn.className = 'toggle-btn inactive';
+            }
+        }
+        
+        async function toggleCheck() {
+            checkActive = !checkActive;
+            updateToggleBtn();
+            await fetch('/toggle-check', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, rate })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    alert('✅ نرخ اضافه شد');
-                    document.getElementById('currencyName').value = '';
-                    document.getElementById('currencyRate').value = '';
-                    loadRates();
-                }
+                body: JSON.stringify({ active: checkActive })
             });
         }
         
-        function loadRates() {
-            fetch('/get-rates')
-                .then(r => r.json())
-                .then(data => {
-                    const list = document.getElementById('ratesList');
-                    
-                    if (data.rates && data.rates.length > 0) {
-                        list.innerHTML = '';
-                        data.rates.forEach(rate => {
-                            const div = document.createElement('div');
-                            div.className = 'rate-item';
-                            div.innerHTML = `
-                                <span class="currency">${rate.name}</span>
-                                <span class="rate">${rate.rate}</span>
-                                <button class="btn btn-danger btn-sm" onclick="deleteRate('${rate.name}')">حذف</button>
-                            `;
-                            list.appendChild(div);
-                        });
-                    }
+        async function loadGroupsAndContacts() {
+            // گروه‌ها
+            const groupsRes = await fetch('/get-groups');
+            const groupsData = await groupsRes.json();
+            const groupSelect = document.getElementById('groupSelect');
+            groupSelect.innerHTML = '<option value="">انتخاب گروه...</option>';
+            if (groupsData.groups) {
+                groupsData.groups.forEach(g => {
+                    const opt = document.createElement('option');
+                    opt.value = g.jid;
+                    opt.textContent = g.name;
+                    groupSelect.appendChild(opt);
                 });
+            }
+            
+            // مخاطبین
+            const contactsRes = await fetch('/get-contacts');
+            const contactsData = await contactsRes.json();
+            const contactSelect = document.getElementById('contactSelect');
+            contactSelect.innerHTML = '<option value="">انتخاب مخاطب...</option>';
+            if (contactsData.contacts) {
+                contactsData.contacts.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.jid;
+                    opt.textContent = c.name;
+                    contactSelect.appendChild(opt);
+                });
+            }
+            
+            // بعد از بارگذاری، مقادیر ذخیره شده رو اعمال کن
+            const configRes = await fetch('/get-check-config');
+            const config = await configRes.json();
+            groupSelect.value = config.groupJid || '';
+            contactSelect.value = config.targetJid || '';
         }
         
-        function deleteRate(name) {
-            fetch('/delete-rate', {
+        async function saveCheckConfig() {
+            const groupJid = document.getElementById('groupSelect').value;
+            const targetJid = document.getElementById('contactSelect').value;
+            
+            if (!groupJid || !targetJid) {
+                alert('لطفاً گروه و شخص تأییدکننده را انتخاب کنید');
+                return;
+            }
+            
+            const res = await fetch('/save-check-config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) loadRates();
+                body: JSON.stringify({ active: checkActive, groupJid, targetJid })
             });
+            const data = await res.json();
+            if (data.success) {
+                alert('✅ تنظیمات ذخیره شد');
+            }
         }
         
-        // فروشگاه
+        // 🛍️ فروشگاه
         function addProduct() {
             const name = document.getElementById('productName').value;
             const price = document.getElementById('productPrice').value;
@@ -670,7 +700,7 @@
             });
         }
         
-        // پاسخ خودکار
+        // 🤖 پاسخ خودکار
         function addAutoReply() {
             const keyword = document.getElementById('keyword').value;
             const response = document.getElementById('autoResponse').value;
@@ -729,6 +759,7 @@
             });
         }
         
+        // 🔐 PIN
         function changePin() {
             const oldPin = document.getElementById('oldPin').value;
             const newPin = document.getElementById('newPin').value;
@@ -750,6 +781,7 @@
             });
         }
         
+        // Socket Events
         socket.on('qr', (data) => {
             if (document.getElementById('qrBox').style.display === 'block') {
                 document.getElementById('qrContainer').innerHTML = `<img src="${data.qr}">`;
@@ -783,6 +815,7 @@
             document.getElementById('msgCount').textContent = msgCount;
         });
         
+        // Functions
         function connect() {
             document.getElementById('statusText').style.display = 'block';
             document.getElementById('statusText').textContent = 'در حال اتصال...';
@@ -831,4 +864,4 @@
         }
     </script>
 </body>
-                            </html>
+                    </html>
