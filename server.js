@@ -18,7 +18,7 @@ app.use(express.json());
 let sock = null;
 let connectionStatus = 'disconnected';
 
-// MongoDB
+// 📦 MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI;
 
 const SessionSchema = new mongoose.Schema({
@@ -33,6 +33,7 @@ mongoose.connect(MONGODB_URI)
     .then(() => console.log('✅ متصل به MongoDB'))
     .catch(err => console.error('❌ خطای MongoDB:', err));
 
+// 🔄 Custom Auth State با MongoDB
 class MongoAuthState {
     constructor() {
         this.creds = null;
@@ -85,6 +86,7 @@ class MongoAuthState {
     }
 }
 
+// 📱 Routes
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -127,6 +129,7 @@ app.post('/disconnect', async (req, res) => {
     res.json({ success: true });
 });
 
+// 🤖 شروع ربات
 async function startBot() {
     try {
         console.log('🚀 شروع ربات...');
@@ -216,10 +219,17 @@ async function startBot() {
     }
 }
 
-// 🔥 اجرای خودکار - این خط ضروریه!
+// 🚀 اجرای خودکار ربات
 console.log('🎯 در حال اجرای startBot...');
 startBot();
 
+// 🔄 Keep Alive (هر ۵ دقیقه)
+setInterval(() => {
+    const url = `http://localhost:${process.env.PORT || 10000}`;
+    http.get(url + '/status', () => {}).on('error', () => {});
+}, 300000);
+
+// 🌐 شروع سرور
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
     console.log(`🌐 سرور روی پورت ${PORT}`);
