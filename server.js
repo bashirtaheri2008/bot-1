@@ -2,8 +2,9 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
+const mongoose = require('mongoose');
 const makeWASocket = require('@whiskeysockets/baileys').default;
-const { useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
+const { DisconnectReason } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const qrcode = require('qrcode');
 
@@ -18,17 +19,81 @@ let sock = null;
 let connectionStatus = 'disconnected';
 let latestQR = null;
 
-// 📱 صفحه اصلی
+// 📦 MongoDB Connection
+const MONGODB_URI = 'mongodb://admin:bashir2008@ac-4ft4dn9-shard-00-00.candod8.mongodb.net:27017,ac-4ft4dn9-shard-00-01.candod8.mongodb.net:27017,ac-4ft4dn9-shard-00-02.candod8.mongodb.net:27017/?ssl=true&replicaSet=atlas-3iisrr-shard-0&authSource=admin&appName=Cluster0';
+
+// Session Model
+const SessionSchema = new mongoose.Schema({
+    key: { type: String, unique: true },
+    value: mongoose.Schema.Types.Mixed,
+    updatedAt: { type: Date, default: Date.now }
+});
+
+const Session = mongoose.model('Session', SessionSchema);
+
+mongoose.connect(MONGODB_URI)
+    .then(() => console.log('✅ متصل به MongoDB'))
+    .catch(err => console.error('❌ خطای MongoDB:', err));
+
+// 🔄 استفاده از MongoDB برای auth state
+async function useMongoAuthState() {
+    const writeData = async (key, value) => {
+        try {
+            await Session.findOneAndUpdate(
+                { key },
+                { key, value, updatedAt: new Date() },
+                { upsert: true }
+            );
+        } catch (error) {
+            console.error('خطا در ذخیره:', error);
+        }
+    };
+
+    const readData = async (key) => {
+        try {
+            const doc = await Session.findOne({ key });
+            return doc ? doc.value : null;
+        } catch (error) {
+            console.error('خطا در خواندن:', error);
+            return null;
+        }
+    };
+
+    const creds = (await readData('creds')) || {};
+    const keys = (await readData('keys')) || {};
+
+    return {
+        state: {
+            creds,
+            keys: {
+                get: (type, ids) => {
+                    const key = `${type}_${ids.join('_')}`;
+                    return keys[key] || null;
+                },
+                set: async (data) => {
+                    for (const [key, value] of Object.entries(data)) {
+                        keys[key] = value;
+                        await writeData(`key_${key}`, value);
+                    }
+                    await writeData('keys', keys);
+                }
+            }
+        },
+        saveCreds: async () => {
+            await writeData('creds', creds);
+        }
+    };
+}
+
+// 📱 Routes
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// 📊 وضعیت
 app.get('/status', (req, res) => {
     res.json({ status: connectionStatus, qr: latestQR });
 });
 
-// 🔌 شروع اتصال
 app.post('/connect', async (req, res) => {
     if (sock) {
         return res.json({ success: false, message: 'ربات در حال اجراست' });
@@ -37,7 +102,6 @@ app.post('/connect', async (req, res) => {
     res.json({ success: true, message: 'در حال اتصال...' });
 });
 
-// 📤 ارسال پیام
 app.post('/send-message', async (req, res) => {
     const { number, message } = req.body;
     
@@ -54,7 +118,6 @@ app.post('/send-message', async (req, res) => {
     }
 });
 
-// 🔌 قطع اتصال
 app.post('/disconnect', async (req, res) => {
     if (sock) {
         await sock.logout();
@@ -68,21 +131,17 @@ app.post('/disconnect', async (req, res) => {
 
 // 🤖 شروع ربات
 async function startBot() {
-    if (sock) {
-        console.log('⚠️ ربات در حال اجراست');
-        return;
-    }
+    if (sock) return;
     
     try {
         console.log('🚀 شروع ربات...');
-        const { state, saveCreds } = await useMultiFileAuthState('auth_session');
+        const { state, saveCreds } = await useMongoAuthState();
         
         sock = makeWASocket({
             auth: state,
             logger: pino({ level: 'silent' }),
             browser: ['Ubuntu', 'Chrome', '20.0.0'],
-            markOnlineOnConnect: true,
-            syncFullHistory: false
+            markOnlineOnConnect: true
         });
 
         sock.ev.on('connection.update', async (update) => {
@@ -91,16 +150,12 @@ async function startBot() {
             console.log('📊 وضعیت:', connection, qr ? '| QR موجوده' : '');
             
             if (qr) {
-                console.log('📱 تولید QR...');
-                try {
-                    const qrImage = await qrcode.toDataURL(qr);
-                    latestQR = qrImage;
-                    io.emit('qr', { qr: qrImage });
-                    connectionStatus = 'waiting_qr';
-                    io.emit('status', { status: 'waiting_qr' });
-                } catch (qrError) {
-                    console.error('خطا در تولید QR:', qrError);
-                }
+                console.log('📱 QR تولید شد');
+                const qrImage = await qrcode.toDataURL(qr);
+                latestQR = qrImage;
+                io.emit('qr', { qr: qrImage });
+                connectionStatus = 'waiting_qr';
+                io.emit('status', { status: 'waiting_qr' });
             }
             
             if (connection === 'open') {
@@ -112,22 +167,18 @@ async function startBot() {
             
             if (connection === 'close') {
                 const statusCode = lastDisconnect?.error?.output?.statusCode;
-                console.log('🔍 دلیل قطع:', statusCode);
+                console.log('🔍 قطع شد، کد:', statusCode);
                 
                 connectionStatus = 'disconnected';
                 latestQR = null;
                 io.emit('status', { status: 'disconnected' });
                 
-                const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-                
-                if (shouldReconnect) {
-                    console.log('🔄 تلاش مجدد در ۵ ثانیه...');
+                if (statusCode !== DisconnectReason.loggedOut) {
                     setTimeout(() => {
                         sock = null;
                         startBot();
                     }, 5000);
                 } else {
-                    console.log('❌ خروج کامل');
                     sock = null;
                 }
             }
@@ -162,17 +213,15 @@ async function startBot() {
         });
 
     } catch (error) {
-        console.error('❌ خطا در startBot:', error);
+        console.error('❌ خطا:', error);
         sock = null;
-        io.emit('error', { message: error.message });
     }
 }
 
 // 🚀 اجرای خودکار
-console.log('🎯 در حال اجرای startBot...');
 startBot();
 
-// 🌐 شروع سرور
+// 🌐 سرور
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
     console.log(`🌐 سرور روی پورت ${PORT}`);
