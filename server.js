@@ -2,8 +2,9 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
+const fs = require('fs');
 const makeWASocket = require('@whiskeysockets/baileys').default;
-const { DisconnectReason } = require('@whiskeysockets/baileys');
+const { useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const qrcode = require('qrcode');
 
@@ -18,72 +19,102 @@ let sock = null;
 let connectionStatus = 'disconnected';
 let latestQR = null;
 
-// 📦 Supabase Config
-const SUPABASE_URL = 'https://xdnnnhuxqpscjynmejum.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_CdhDddnsDaac97dU4x5uhg_ODSWyeXu';
+// 📦 GitHub Config - اینها رو خودت جایگزین کن!
+const GITHUB_TOKEN = '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';
+const GITHUB_REPO = 'bashirtaheri2008/bot-1';
+const GITHUB_FILE = 'session-data.json';
 
-async function saveSession(key, value) {
+// 💾 ذخیره session در GitHub
+async function saveSessionToGitHub() {
     try {
-        await fetch(`${SUPABASE_URL}/rest/v1/sessions`, {
-            method: 'POST',
-            headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`,
-                'Content-Type': 'application/json',
-                'Prefer': 'resolution=merge-duplicates'
-            },
-            body: JSON.stringify({
-                key: key,
-                value: value,
-                updated_at: new Date().toISOString()
-            })
-        });
-    } catch (error) {
-        console.error('خطا در ذخیره:', error);
-    }
-}
-
-async function loadSession(key) {
-    try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/sessions?key=eq.${key}&select=value`, {
-            headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`
-            }
-        });
-        const data = await response.json();
-        return data[0]?.value || null;
-    } catch (error) {
-        console.error('خطا در خواندن:', error);
-        return null;
-    }
-}
-
-async function useSupabaseAuthState() {
-    const creds = (await loadSession('creds')) || {};
-    const keys = (await loadSession('keys')) || {};
-
-    return {
-        state: {
-            creds,
-            keys: {
-                get: (type, ids) => {
-                    const key = `${type}_${ids.join('_')}`;
-                    return keys[key] || null;
-                },
-                set: async (data) => {
-                    for (const [key, value] of Object.entries(data)) {
-                        keys[key] = value;
-                    }
-                    await saveSession('keys', keys);
-                }
-            }
-        },
-        saveCreds: async () => {
-            await saveSession('creds', creds);
+        const files = fs.readdirSync('auth_session');
+        const sessionData = {};
+        
+        for (const file of files) {
+            sessionData[file] = fs.readFileSync(`auth_session/${file}`, 'utf8');
         }
-    };
+        
+        const content = Buffer.from(JSON.stringify(sessionData)).toString('base64');
+        
+        // اول ببین فایل وجود داره؟
+        const checkResponse = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`, {
+            headers: {
+                'Authorization': `token ${GITHUB_TOKEN}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+        
+        let sha = null;
+        if (checkResponse.ok) {
+            const data = await checkResponse.json();
+            sha = data.sha;
+        }
+        
+        // ذخیره فایل
+        const body = {
+            message: 'save session',
+            content: content
+        };
+        
+        if (sha) {
+            body.sha = sha;
+        }
+        
+        const saveResponse = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${GITHUB_TOKEN}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+        
+        if (saveResponse.ok) {
+            console.log('✅ Session در GitHub ذخیره شد');
+        }
+    } catch (error) {
+        console.error('خطا در ذخیره:', error.message);
+    }
 }
+
+// 📂 خواندن session از GitHub
+async function loadSessionFromGitHub() {
+    try {
+        const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`, {
+            headers: {
+                'Authorization': `token ${GITHUB_TOKEN}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+        
+        if (!response.ok) {
+            return false;
+        }
+        
+        const data = await response.json();
+        const content = Buffer.from(data.content, 'base64').toString('utf8');
+        const sessionData = JSON.parse(content);
+        
+        if (sessionData && Object.keys(sessionData).length > 0) {
+            fs.mkdirSync('auth_session', { recursive: true });
+            
+            for (const [file, content] of Object.entries(sessionData)) {
+                fs.writeFileSync(`auth_session/${file}`, content);
+            }
+            
+            console.log('✅ Session از GitHub بارگذاری شد');
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error('خطا در خواندن:', error.message);
+        return false;
+    }
+}
+
+// ذخیره خودکار هر ۵ دقیقه
+setInterval(saveSessionToGitHub, 300000);
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -132,23 +163,22 @@ async function startBot() {
     if (sock) return;
     
     try {
+        // اول session رو از GitHub بخون
+        await loadSessionFromGitHub();
+        
         console.log('🚀 شروع ربات...');
-        const { state, saveCreds } = await useSupabaseAuthState();
+        const { state, saveCreds } = await useMultiFileAuthState('auth_session');
         
         sock = makeWASocket({
             auth: state,
             logger: pino({ level: 'silent' }),
-            browser: ['Ubuntu', 'Chrome', '20.0.0'],
-            markOnlineOnConnect: true
+            browser: ['Ubuntu', 'Chrome', '20.0.0']
         });
 
         sock.ev.on('connection.update', async (update) => {
             const { connection, lastDisconnect, qr } = update;
             
-            console.log('📊 وضعیت:', connection, qr ? '| QR موجوده' : '');
-            
             if (qr) {
-                console.log('📱 QR تولید شد');
                 const qrImage = await qrcode.toDataURL(qr);
                 latestQR = qrImage;
                 io.emit('qr', { qr: qrImage });
@@ -161,11 +191,13 @@ async function startBot() {
                 latestQR = null;
                 io.emit('status', { status: 'connected' });
                 console.log('✅ ربات وصل شد!');
+                
+                // ذخیره فوری
+                setTimeout(saveSessionToGitHub, 5000);
             }
             
             if (connection === 'close') {
                 const statusCode = lastDisconnect?.error?.output?.statusCode;
-                console.log('🔍 قطع شد، کد:', statusCode);
                 
                 connectionStatus = 'disconnected';
                 latestQR = null;
@@ -201,8 +233,6 @@ async function startBot() {
                     message: text,
                     timestamp: new Date().toLocaleTimeString('fa-IR')
                 });
-                
-                console.log(`📩 پیام از ${from}: ${text}`);
                 
                 if (text.toLowerCase() === 'سلام') {
                     await sock.sendMessage(from, { text: 'سلام! 👋 چطور می‌تونم کمکت کنم؟' });
