@@ -19,7 +19,7 @@ let sock = null;
 let connectionStatus = 'disconnected';
 let latestQR = null;
 
-// 🔐 PIN
+// 🔐 PIN Configuration
 const PIN_FILE = 'pin.json';
 const DEFAULT_PIN = '1234';
 
@@ -62,6 +62,48 @@ function saveAutoReplies(replies) {
     }
 }
 
+// 💱 صرافی
+const RATES_FILE = 'rates.json';
+
+function getRates() {
+    try {
+        if (fs.existsSync(RATES_FILE)) {
+            return JSON.parse(fs.readFileSync(RATES_FILE, 'utf8'));
+        }
+    } catch (error) {}
+    return [];
+}
+
+function saveRates(rates) {
+    try {
+        fs.writeFileSync(RATES_FILE, JSON.stringify(rates, null, 2));
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+// 🛍️ فروشگاه
+const PRODUCTS_FILE = 'products.json';
+
+function getProducts() {
+    try {
+        if (fs.existsSync(PRODUCTS_FILE)) {
+            return JSON.parse(fs.readFileSync(PRODUCTS_FILE, 'utf8'));
+        }
+    } catch (error) {}
+    return [];
+}
+
+function saveProducts(products) {
+    try {
+        fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2));
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
 // 📦 GitHub Config
 const GITHUB_TOKEN = 'YOUR_GITHUB_TOKEN';
 const GITHUB_REPO = 'bashirtaheri2008/bot-1';
@@ -98,7 +140,7 @@ async function saveSessionToGitHub() {
             body: JSON.stringify(body)
         });
     } catch (error) {
-        console.error('خطا در ذخیره:', error.message);
+        console.error('خطا در ذخیره session:', error.message);
     }
 }
 
@@ -128,7 +170,7 @@ async function loadSessionFromGitHub() {
 
 setInterval(saveSessionToGitHub, 300000);
 
-// 📱 Routes
+// 📱 Main Routes
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -154,9 +196,9 @@ app.post('/change-pin', (req, res) => {
     }
     
     if (savePIN(newPin)) {
-        res.json({ success: true });
+        res.json({ success: true, message: 'PIN تغییر کرد' });
     } else {
-        res.json({ success: false, message: 'خطا در ذخیره' });
+        res.json({ success: false, message: 'خطا در ذخیره PIN' });
     }
 });
 
@@ -186,6 +228,57 @@ app.post('/delete-auto-reply', (req, res) => {
     res.json({ success: true });
 });
 
+// 💱 Exchange Routes
+app.post('/add-rate', (req, res) => {
+    const { name, rate } = req.body;
+    
+    if (!name || !rate) {
+        return res.json({ success: false, message: 'نام ارز و نرخ را وارد کنید' });
+    }
+    
+    const rates = getRates();
+    rates.push({ name, rate });
+    saveRates(rates);
+    res.json({ success: true });
+});
+
+app.get('/get-rates', (req, res) => {
+    res.json({ rates: getRates() });
+});
+
+app.post('/delete-rate', (req, res) => {
+    const { name } = req.body;
+    const rates = getRates().filter(r => r.name !== name);
+    saveRates(rates);
+    res.json({ success: true });
+});
+
+// 🛍️ Shop Routes
+app.post('/add-product', (req, res) => {
+    const { name, price, desc } = req.body;
+    
+    if (!name || !price) {
+        return res.json({ success: false, message: 'نام و قیمت محصول را وارد کنید' });
+    }
+    
+    const products = getProducts();
+    products.push({ name, price, desc: desc || '' });
+    saveProducts(products);
+    res.json({ success: true });
+});
+
+app.get('/get-products', (req, res) => {
+    res.json({ products: getProducts() });
+});
+
+app.post('/delete-product', (req, res) => {
+    const { name } = req.body;
+    const products = getProducts().filter(p => p.name !== name);
+    saveProducts(products);
+    res.json({ success: true });
+});
+
+// 📊 Status Routes
 app.get('/status', (req, res) => {
     res.json({ status: connectionStatus, qr: latestQR });
 });
@@ -250,6 +343,7 @@ app.post('/disconnect', async (req, res) => {
     res.json({ success: true });
 });
 
+// 🤖 Start Bot
 async function startBot() {
     if (sock) return;
     
@@ -325,7 +419,30 @@ async function startBot() {
                 
                 if (match) {
                     await sock.sendMessage(from, { text: match.response });
-                    io.emit('auto-reply-sent', { keyword: match.keyword });
+                }
+                
+                // 💱 بررسی نرخ ارز
+                if (text.toLowerCase().includes('نرخ') || text.toLowerCase().includes('قیمت')) {
+                    const rates = getRates();
+                    if (rates.length > 0) {
+                        let rateText = '💱 نرخ‌های فعلی:\n';
+                        rates.forEach(r => {
+                            rateText += `${r.name}: ${r.rate}\n`;
+                        });
+                        await sock.sendMessage(from, { text: rateText });
+                    }
+                }
+                
+                // 🛍️ بررسی محصولات
+                if (text.toLowerCase().includes('محصول') || text.toLowerCase().includes('کالا')) {
+                    const products = getProducts();
+                    if (products.length > 0) {
+                        let productText = '🛍️ محصولات:\n';
+                        products.forEach(p => {
+                            productText += `📦 ${p.name}: ${p.price}${p.desc ? ' - ' + p.desc : ''}\n`;
+                        });
+                        await sock.sendMessage(from, { text: productText });
+                    }
                 }
             }
         });
@@ -336,6 +453,7 @@ async function startBot() {
     }
 }
 
+// 🚀 Start
 startBot();
 
 const PORT = process.env.PORT || 10000;
