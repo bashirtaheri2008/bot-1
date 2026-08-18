@@ -13,7 +13,6 @@
             min-height: 100vh;
         }
         
-        /* صفحه PIN */
         .pin-page {
             display: flex;
             align-items: center;
@@ -46,7 +45,6 @@
         }
         .pin-input:focus { border-color: #25d366; outline: none; }
         
-        /* صفحه اتصال */
         .connect-page {
             display: none;
             align-items: center;
@@ -105,6 +103,8 @@
         .btn-dark:hover { background: #064a42; }
         .btn-danger { background: #dc3545; color: white; }
         .btn-danger:hover { background: #c82333; }
+        .btn-warning { background: #ff9800; color: white; }
+        .btn-warning:hover { background: #e68900; }
         .btn-sm { padding: 8px 15px; font-size: 13px; width: auto; }
         
         .divider {
@@ -149,7 +149,6 @@
             margin: 10px 0;
         }
         
-        /* داشبورد */
         .dashboard {
             display: none;
             max-width: 900px;
@@ -176,7 +175,6 @@
             background: #25d366;
         }
         
-        /* منوی تب‌ها */
         .tabs {
             display: flex;
             gap: 10px;
@@ -198,10 +196,7 @@
             font-family: inherit;
         }
         .tab:hover { background: #e8f5e9; }
-        .tab.active {
-            background: #075e54;
-            color: white;
-        }
+        .tab.active { background: #075e54; color: white; }
         
         .tab-content { display: none; }
         .tab-content.active { display: block; }
@@ -257,8 +252,57 @@
         .auto-reply-item .keyword { font-weight: bold; color: #075e54; }
         .auto-reply-item .response { color: #6c757d; font-size: 13px; }
         
+        .business-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .business-option {
+            text-align: center;
+            padding: 30px 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        .business-option:hover {
+            border-color: #25d366;
+            background: #e8f5e9;
+        }
+        .business-option .icon { font-size: 40px; margin-bottom: 10px; }
+        .business-option .title { font-weight: bold; color: #075e54; margin-bottom: 5px; }
+        .business-option .desc { font-size: 12px; color: #6c757d; }
+        
+        .rate-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 5px;
+        }
+        .rate-item .currency { font-weight: bold; color: #075e54; }
+        .rate-item .rate { color: #25d366; font-weight: bold; }
+        
+        .product-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 5px;
+        }
+        .product-item .name { font-weight: bold; color: #075e54; }
+        .product-item .price { color: #ff9800; font-weight: bold; }
+        
         @media (min-width: 768px) {
             .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        }
+        @media (max-width: 768px) {
+            .business-options { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -310,11 +354,11 @@
             <span class="badge">متصل</span>
         </div>
         
-        <!-- منو -->
         <div class="tabs">
             <button class="tab active" onclick="switchTab('home')">🏠 خانه</button>
             <button class="tab" onclick="switchTab('send')">📤 ارسال پیام</button>
             <button class="tab" onclick="switchTab('autoreply')">🤖 پاسخ خودکار</button>
+            <button class="tab" onclick="switchTab('business')">💼 کسب و کار</button>
             <button class="tab" onclick="switchTab('settings')">⚙️ تنظیمات</button>
         </div>
         
@@ -329,10 +373,7 @@
                 </div>
                 <div class="card">
                     <h2>📊 آمار</h2>
-                    <div id="stats">
-                        <p>پیام‌های دریافتی: <span id="msgCount">0</span></p>
-                        <p>پاسخ‌های خودکار: <span id="autoReplyCount">0</span></p>
-                    </div>
+                    <p>پیام‌های دریافتی: <span id="msgCount">0</span></p>
                 </div>
             </div>
         </div>
@@ -365,6 +406,62 @@
             </div>
         </div>
         
+        <!-- کسب و کار -->
+        <div class="tab-content" id="tab-business">
+            <div class="card">
+                <h2>💼 کسب و کار</h2>
+                <p style="color: #6c757d; margin-bottom: 15px;">نوع کسب و کار خود را انتخاب کنید</p>
+                
+                <div class="business-options">
+                    <div class="business-option" onclick="showExchange()">
+                        <div class="icon">💱</div>
+                        <div class="title">صرافی</div>
+                        <div class="desc">مدیریت نرخ ارز و معاملات</div>
+                    </div>
+                    <div class="business-option" onclick="showShop()">
+                        <div class="icon">🛍️</div>
+                        <div class="title">فروشگاه</div>
+                        <div class="desc">مدیریت محصولات و فروش</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- بخش صرافی -->
+            <div class="card" id="exchangeSection" style="display: none;">
+                <h2>💱 مدیریت صرافی</h2>
+                
+                <h3>افزودن نرخ جدید</h3>
+                <div class="grid-2">
+                    <input type="text" class="input" id="currencyName" placeholder="نام ارز (مثلاً: دلار)">
+                    <input type="number" class="input" id="currencyRate" placeholder="نرخ (مثلاً: 72.5)">
+                </div>
+                <button class="btn btn-primary" onclick="addRate()">➕ افزودن نرخ</button>
+                
+                <h3 style="margin-top: 15px;">نرخ‌های فعلی</h3>
+                <div id="ratesList">
+                    <p style="color: #6c757d; font-size: 13px;">نرخی ثبت نشده</p>
+                </div>
+            </div>
+            
+            <!-- بخش فروشگاه -->
+            <div class="card" id="shopSection" style="display: none;">
+                <h2>🛍️ مدیریت فروشگاه</h2>
+                
+                <h3>افزودن محصول جدید</h3>
+                <input type="text" class="input" id="productName" placeholder="نام محصول">
+                <div class="grid-2">
+                    <input type="number" class="input" id="productPrice" placeholder="قیمت">
+                    <input type="text" class="input" id="productDesc" placeholder="توضیحات (اختیاری)">
+                </div>
+                <button class="btn btn-primary" onclick="addProduct()">➕ افزودن محصول</button>
+                
+                <h3 style="margin-top: 15px;">محصولات</h3>
+                <div id="productsList">
+                    <p style="color: #6c757d; font-size: 13px;">محصولی ثبت نشده</p>
+                </div>
+            </div>
+        </div>
+        
         <!-- تنظیمات -->
         <div class="tab-content" id="tab-settings">
             <div class="card">
@@ -385,9 +482,7 @@
     <script>
         const socket = io();
         let msgCount = 0;
-        let autoReplyCount = 0;
         
-        // Enter key برای PIN
         document.getElementById('pinInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') verifyPin();
         });
@@ -405,6 +500,8 @@
                 if (data.success) {
                     checkConnection();
                     loadAutoReplies();
+                    loadRates();
+                    loadProducts();
                 } else {
                     alert('❌ PIN اشتباه است');
                     document.getElementById('pinInput').value = '';
@@ -444,24 +541,132 @@
             event.target.classList.add('active');
         }
         
-        function changePin() {
-            const oldPin = document.getElementById('oldPin').value;
-            const newPin = document.getElementById('newPin').value;
+        function showExchange() {
+            document.getElementById('exchangeSection').style.display = 'block';
+            document.getElementById('shopSection').style.display = 'none';
+        }
+        
+        function showShop() {
+            document.getElementById('shopSection').style.display = 'block';
+            document.getElementById('exchangeSection').style.display = 'none';
+        }
+        
+        // صرافی
+        function addRate() {
+            const name = document.getElementById('currencyName').value;
+            const rate = document.getElementById('currencyRate').value;
             
-            if (!oldPin || !newPin) return alert('هر دو فیلد را پر کنید');
+            if (!name || !rate) return alert('نام ارز و نرخ را وارد کنید');
             
-            fetch('/change-pin', {
+            fetch('/add-rate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ oldPin, newPin })
+                body: JSON.stringify({ name, rate })
             })
             .then(r => r.json())
             .then(data => {
-                alert(data.success ? '✅ PIN تغییر کرد' : '❌ ' + data.message);
                 if (data.success) {
-                    document.getElementById('oldPin').value = '';
-                    document.getElementById('newPin').value = '';
+                    alert('✅ نرخ اضافه شد');
+                    document.getElementById('currencyName').value = '';
+                    document.getElementById('currencyRate').value = '';
+                    loadRates();
                 }
+            });
+        }
+        
+        function loadRates() {
+            fetch('/get-rates')
+                .then(r => r.json())
+                .then(data => {
+                    const list = document.getElementById('ratesList');
+                    
+                    if (data.rates && data.rates.length > 0) {
+                        list.innerHTML = '';
+                        data.rates.forEach(rate => {
+                            const div = document.createElement('div');
+                            div.className = 'rate-item';
+                            div.innerHTML = `
+                                <span class="currency">${rate.name}</span>
+                                <span class="rate">${rate.rate}</span>
+                                <button class="btn btn-danger btn-sm" onclick="deleteRate('${rate.name}')">حذف</button>
+                            `;
+                            list.appendChild(div);
+                        });
+                    }
+                });
+        }
+        
+        function deleteRate(name) {
+            fetch('/delete-rate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) loadRates();
+            });
+        }
+        
+        // فروشگاه
+        function addProduct() {
+            const name = document.getElementById('productName').value;
+            const price = document.getElementById('productPrice').value;
+            const desc = document.getElementById('productDesc').value;
+            
+            if (!name || !price) return alert('نام و قیمت محصول را وارد کنید');
+            
+            fetch('/add-product', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, price, desc })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ محصول اضافه شد');
+                    document.getElementById('productName').value = '';
+                    document.getElementById('productPrice').value = '';
+                    document.getElementById('productDesc').value = '';
+                    loadProducts();
+                }
+            });
+        }
+        
+        function loadProducts() {
+            fetch('/get-products')
+                .then(r => r.json())
+                .then(data => {
+                    const list = document.getElementById('productsList');
+                    
+                    if (data.products && data.products.length > 0) {
+                        list.innerHTML = '';
+                        data.products.forEach(product => {
+                            const div = document.createElement('div');
+                            div.className = 'product-item';
+                            div.innerHTML = `
+                                <div>
+                                    <span class="name">${product.name}</span>
+                                    ${product.desc ? `<br><small style="color: #6c757d;">${product.desc}</small>` : ''}
+                                </div>
+                                <span class="price">${product.price}</span>
+                                <button class="btn btn-danger btn-sm" onclick="deleteProduct('${product.name}')">حذف</button>
+                            `;
+                            list.appendChild(div);
+                        });
+                    }
+                });
+        }
+        
+        function deleteProduct(name) {
+            fetch('/delete-product', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) loadProducts();
             });
         }
         
@@ -496,7 +701,7 @@
                     
                     if (data.replies && data.replies.length > 0) {
                         list.innerHTML = '';
-                        data.replies.forEach((reply, index) => {
+                        data.replies.forEach(reply => {
                             const div = document.createElement('div');
                             div.className = 'auto-reply-item';
                             div.innerHTML = `
@@ -521,6 +726,27 @@
             .then(r => r.json())
             .then(data => {
                 if (data.success) loadAutoReplies();
+            });
+        }
+        
+        function changePin() {
+            const oldPin = document.getElementById('oldPin').value;
+            const newPin = document.getElementById('newPin').value;
+            
+            if (!oldPin || !newPin) return alert('هر دو فیلد را پر کنید');
+            
+            fetch('/change-pin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ oldPin, newPin })
+            })
+            .then(r => r.json())
+            .then(data => {
+                alert(data.success ? '✅ PIN تغییر کرد' : '❌ ' + data.message);
+                if (data.success) {
+                    document.getElementById('oldPin').value = '';
+                    document.getElementById('newPin').value = '';
+                }
             });
         }
         
@@ -605,4 +831,4 @@
         }
     </script>
 </body>
-    </html>
+                            </html>
