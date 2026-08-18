@@ -2,9 +2,8 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
-const mongoose = require('mongoose');
 const makeWASocket = require('@whiskeysockets/baileys').default;
-const { DisconnectReason } = require('@whiskeysockets/baileys');
+const { useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const qrcode = require('qrcode');
 
@@ -17,84 +16,19 @@ app.use(express.json());
 
 let sock = null;
 let connectionStatus = 'disconnected';
+let latestQR = null;
 
-// 📦 MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI;
-
-const SessionSchema = new mongoose.Schema({
-    key: { type: String, unique: true },
-    value: mongoose.Schema.Types.Mixed,
-    updatedAt: { type: Date, default: Date.now }
-});
-
-const Session = mongoose.model('Session', SessionSchema);
-
-mongoose.connect(MONGODB_URI)
-    .then(() => console.log('✅ متصل به MongoDB'))
-    .catch(err => console.error('❌ خطای MongoDB:', err));
-
-// 🔄 Custom Auth State با MongoDB
-class MongoAuthState {
-    constructor() {
-        this.creds = null;
-        this.keys = {};
-    }
-
-    async load() {
-        try {
-            const credDoc = await Session.findOne({ key: 'creds' });
-            if (credDoc) this.creds = credDoc.value;
-            
-            const keyDocs = await Session.find({ key: { $regex: '^key_' } });
-            keyDocs.forEach(doc => {
-                const keyName = doc.key.replace('key_', '');
-                this.keys[keyName] = doc.value;
-            });
-        } catch (error) {
-            console.error('خطا در load:', error);
-        }
-    }
-
-    get state() {
-        return { creds: this.creds || {}, keys: this.keys };
-    }
-
-    async saveCreds() {
-        try {
-            await Session.findOneAndUpdate(
-                { key: 'creds' },
-                { key: 'creds', value: this.creds, updatedAt: new Date() },
-                { upsert: true }
-            );
-        } catch (error) {
-            console.error('خطا در saveCreds:', error);
-        }
-    }
-
-    async saveKeys() {
-        try {
-            for (const [key, value] of Object.entries(this.keys)) {
-                await Session.findOneAndUpdate(
-                    { key: `key_${key}` },
-                    { key: `key_${key}`, value, updatedAt: new Date() },
-                    { upsert: true }
-                );
-            }
-        } catch (error) {
-            console.error('خطا در saveKeys:', error);
-        }
-    }
-}
-
-// 📱 Routes
+// 📱 صفحه اصلی
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// 📊 وضعیت
 app.get('/status', (req, res) => {
-    res.json({ status: connectionStatus });
+    res.json({ status: connectionStatus, qr: latestQR });
 });
 
+// 🔌 شروع اتصال
 app.post('/connect', async (req, res) => {
     if (sock) {
         return res.json({ success: false, message: 'ربات در حال اجراست' });
@@ -103,6 +37,7 @@ app.post('/connect', async (req, res) => {
     res.json({ success: true, message: 'در حال اتصال...' });
 });
 
+// 📤 ارسال پیام
 app.post('/send-message', async (req, res) => {
     const { number, message } = req.body;
     
@@ -119,11 +54,13 @@ app.post('/send-message', async (req, res) => {
     }
 });
 
+// 🔌 قطع اتصال
 app.post('/disconnect', async (req, res) => {
     if (sock) {
         await sock.logout();
         sock = null;
         connectionStatus = 'disconnected';
+        latestQR = null;
         io.emit('status', { status: 'disconnected' });
     }
     res.json({ success: true });
@@ -131,15 +68,21 @@ app.post('/disconnect', async (req, res) => {
 
 // 🤖 شروع ربات
 async function startBot() {
+    if (sock) {
+        console.log('⚠️ ربات در حال اجراست');
+        return;
+    }
+    
     try {
         console.log('🚀 شروع ربات...');
-        const authState = new MongoAuthState();
-        await authState.load();
+        const { state, saveCreds } = await useMultiFileAuthState('auth_session');
         
         sock = makeWASocket({
-            auth: authState.state,
+            auth: state,
             logger: pino({ level: 'silent' }),
-            browser: ['Ubuntu', 'Chrome', '20.0.0']
+            browser: ['Ubuntu', 'Chrome', '20.0.0'],
+            markOnlineOnConnect: true,
+            syncFullHistory: false
         });
 
         sock.ev.on('connection.update', async (update) => {
@@ -149,43 +92,48 @@ async function startBot() {
             
             if (qr) {
                 console.log('📱 تولید QR...');
-                const qrImage = await qrcode.toDataURL(qr);
-                io.emit('qr', { qr: qrImage });
-                connectionStatus = 'waiting_qr';
-                io.emit('status', { status: 'waiting_qr' });
+                try {
+                    const qrImage = await qrcode.toDataURL(qr);
+                    latestQR = qrImage;
+                    io.emit('qr', { qr: qrImage });
+                    connectionStatus = 'waiting_qr';
+                    io.emit('status', { status: 'waiting_qr' });
+                } catch (qrError) {
+                    console.error('خطا در تولید QR:', qrError);
+                }
             }
             
             if (connection === 'open') {
                 connectionStatus = 'connected';
+                latestQR = null;
                 io.emit('status', { status: 'connected' });
                 console.log('✅ ربات وصل شد!');
             }
             
             if (connection === 'close') {
-                const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+                const statusCode = lastDisconnect?.error?.output?.statusCode;
+                console.log('🔍 دلیل قطع:', statusCode);
+                
                 connectionStatus = 'disconnected';
+                latestQR = null;
                 io.emit('status', { status: 'disconnected' });
-                console.log('❌ قطع شد. اتصال مجدد:', shouldReconnect);
+                
+                const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
                 
                 if (shouldReconnect) {
+                    console.log('🔄 تلاش مجدد در ۵ ثانیه...');
                     setTimeout(() => {
                         sock = null;
                         startBot();
-                    }, 3000);
+                    }, 5000);
                 } else {
+                    console.log('❌ خروج کامل');
                     sock = null;
                 }
             }
         });
 
-        sock.ev.on('creds.update', async (creds) => {
-            authState.creds = creds;
-            await authState.saveCreds();
-        });
-
-        const saveInterval = setInterval(async () => {
-            await authState.saveKeys();
-        }, 10000);
+        sock.ev.on('creds.update', saveCreds);
 
         sock.ev.on('messages.upsert', async ({ messages, type }) => {
             const msg = messages[0];
@@ -214,20 +162,15 @@ async function startBot() {
         });
 
     } catch (error) {
-        console.error('❌ خطا:', error);
+        console.error('❌ خطا در startBot:', error);
+        sock = null;
         io.emit('error', { message: error.message });
     }
 }
 
-// 🚀 اجرای خودکار ربات
+// 🚀 اجرای خودکار
 console.log('🎯 در حال اجرای startBot...');
 startBot();
-
-// 🔄 Keep Alive (هر ۵ دقیقه)
-setInterval(() => {
-    const url = `http://localhost:${process.env.PORT || 10000}`;
-    http.get(url + '/status', () => {}).on('error', () => {});
-}, 300000);
 
 // 🌐 شروع سرور
 const PORT = process.env.PORT || 10000;
