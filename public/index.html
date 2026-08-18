@@ -11,62 +11,71 @@
             font-family: 'Segoe UI', Tahoma, sans-serif;
             background: #f0f2f5;
             min-height: 100vh;
+        }
+        
+        /* صفحه PIN */
+        .pin-page {
             display: flex;
             align-items: center;
             justify-content: center;
+            min-height: 100vh;
             padding: 20px;
         }
-        
-        .main-card {
+        .pin-card {
             background: white;
             border-radius: 15px;
             box-shadow: 0 5px 30px rgba(0,0,0,0.15);
             width: 100%;
-            max-width: 420px;
+            max-width: 380px;
             padding: 30px 25px;
             text-align: center;
         }
-        
-        .header-icon {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 15px;
-            font-size: 35px;
-            background: #075e54;
-        }
-        
-        h1 {
-            color: #075e54;
-            font-size: 22px;
-            margin-bottom: 5px;
-        }
-        
-        .subtitle {
-            color: #6c757d;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
-        
+        .pin-icon { font-size: 50px; margin-bottom: 15px; }
+        .pin-card h1 { color: #075e54; font-size: 20px; margin-bottom: 5px; }
+        .pin-card .subtitle { color: #6c757d; font-size: 13px; margin-bottom: 20px; }
         .pin-input {
             width: 100%;
             padding: 15px;
             border: 2px solid #ddd;
             border-radius: 10px;
             font-size: 24px;
-            font-family: inherit;
             text-align: center;
             letter-spacing: 15px;
             margin: 15px 0;
             direction: ltr;
         }
-        .pin-input:focus {
-            border-color: #25d366;
-            outline: none;
+        .pin-input:focus { border-color: #25d366; outline: none; }
+        
+        /* صفحه اتصال */
+        .connect-page {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
         }
+        .connect-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 30px rgba(0,0,0,0.15);
+            width: 100%;
+            max-width: 400px;
+            padding: 30px 25px;
+            text-align: center;
+        }
+        .connect-icon { font-size: 50px; margin-bottom: 15px; }
+        .connect-card h1 { color: #075e54; font-size: 20px; margin-bottom: 5px; }
+        .connect-card .subtitle { color: #6c757d; font-size: 13px; margin-bottom: 20px; }
+        
+        .qr-box {
+            display: none;
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .qr-box img { width: 220px; height: 220px; border-radius: 10px; }
+        .qr-label { color: #075e54; font-size: 14px; font-weight: bold; margin-bottom: 10px; }
         
         .status-text {
             font-size: 14px;
@@ -76,27 +85,6 @@
             background: #e8f5e9;
             border-radius: 8px;
             display: none;
-        }
-        
-        .qr-box {
-            display: none;
-            margin: 15px 0;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
-        }
-        
-        .qr-box img {
-            width: 220px;
-            height: 220px;
-            border-radius: 10px;
-        }
-        
-        .qr-label {
-            color: #075e54;
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 10px;
         }
         
         .btn {
@@ -111,13 +99,13 @@
             transition: all 0.2s;
             margin: 5px 0;
         }
-        
         .btn-primary { background: #25d366; color: white; }
         .btn-primary:hover { background: #1eb955; }
         .btn-dark { background: #075e54; color: white; }
         .btn-dark:hover { background: #064a42; }
         .btn-danger { background: #dc3545; color: white; }
         .btn-danger:hover { background: #c82333; }
+        .btn-sm { padding: 8px 15px; font-size: 13px; width: auto; }
         
         .divider {
             display: flex;
@@ -126,8 +114,7 @@
             color: #6c757d;
             font-size: 13px;
         }
-        .divider::before,
-        .divider::after {
+        .divider::before, .divider::after {
             content: '';
             flex: 1;
             height: 1px;
@@ -141,15 +128,11 @@
             border: 2px solid #ddd;
             border-radius: 8px;
             font-size: 15px;
-            font-family: inherit;
             text-align: center;
             margin: 5px 0;
             direction: ltr;
         }
-        .phone-input:focus {
-            border-color: #25d366;
-            outline: none;
-        }
+        .phone-input:focus { border-color: #25d366; outline: none; }
         
         .pairing-code {
             display: none;
@@ -166,10 +149,12 @@
             margin: 10px 0;
         }
         
+        /* داشبورد */
         .dashboard {
             display: none;
-            width: 100%;
-            max-width: 800px;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
         }
         
         .dash-header {
@@ -183,7 +168,6 @@
             margin-bottom: 15px;
         }
         .dash-header h1 { font-size: 18px; }
-        
         .badge {
             padding: 6px 15px;
             border-radius: 15px;
@@ -192,35 +176,55 @@
             background: #25d366;
         }
         
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
+        /* منوی تب‌ها */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            overflow-x: auto;
+            padding: 5px;
         }
+        .tab {
+            padding: 10px 20px;
+            background: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            color: #075e54;
+            white-space: nowrap;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .tab:hover { background: #e8f5e9; }
+        .tab.active {
+            background: #075e54;
+            color: white;
+        }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
         
         .card {
             background: white;
             border-radius: 12px;
-            padding: 15px;
+            padding: 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 15px;
         }
+        .card h2 { color: #075e54; font-size: 16px; margin-bottom: 15px; }
+        .card h3 { color: #075e54; font-size: 14px; margin-bottom: 10px; }
         
-        .card h2 {
-            color: #075e54;
-            font-size: 15px;
-            margin-bottom: 10px;
-        }
-        
-        .input, .textarea {
+        .input, .textarea, select {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 8px;
             font-size: 14px;
             font-family: inherit;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
-        
         .textarea { height: 70px; resize: vertical; }
         
         .messages {
@@ -230,7 +234,6 @@
             border-radius: 8px;
             padding: 10px;
         }
-        
         .msg {
             background: white;
             padding: 8px;
@@ -242,54 +245,61 @@
         .msg .sender { font-weight: bold; color: #075e54; }
         .msg .time { color: #6c757d; font-size: 11px; float: left; }
         
+        .auto-reply-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 5px;
+        }
+        .auto-reply-item .keyword { font-weight: bold; color: #075e54; }
+        .auto-reply-item .response { color: #6c757d; font-size: 13px; }
+        
         @media (min-width: 768px) {
-            .grid { grid-template-columns: 1fr 1fr; }
-            .full-width { grid-column: 1 / -1; }
+            .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         }
     </style>
 </head>
 <body>
     <!-- صفحه PIN -->
-    <div class="main-card" id="pinPage">
-        <div class="header-icon">🔐</div>
-        <h1>ورود به داشبورد</h1>
-        <p class="subtitle">PIN خود را وارد کنید</p>
-        
-        <input type="password" class="pin-input" id="pinInput" 
-               maxlength="6" placeholder="••••" inputmode="numeric">
-        
-        <button class="btn btn-primary" onclick="verifyPin()">ورود</button>
+    <div class="pin-page" id="pinPage">
+        <div class="pin-card">
+            <div class="pin-icon">🔐</div>
+            <h1>ورود به داشبورد</h1>
+            <p class="subtitle">PIN خود را وارد کنید</p>
+            <input type="password" class="pin-input" id="pinInput" maxlength="6" placeholder="••••" inputmode="numeric">
+            <button class="btn btn-primary" onclick="verifyPin()">ورود</button>
+        </div>
     </div>
     
     <!-- صفحه اتصال -->
-    <div class="main-card" id="connectPage" style="display: none;">
-        <div class="header-icon">💬</div>
-        <h1>اتصال به واتساپ</h1>
-        <p class="subtitle">برای شروع، یکی از روش‌های زیر را انتخاب کنید</p>
-        
-        <div class="status-text" id="statusText"></div>
-        
-        <div class="qr-box" id="qrBox">
-            <p class="qr-label">📱 QR Code را اسکن کنید</p>
-            <div id="qrContainer"></div>
-        </div>
-        
-        <button class="btn btn-primary" onclick="connect()">
-            🔌 اتصال با QR Code
-        </button>
-        
-        <div class="divider"><span>یا</span></div>
-        
-        <input type="tel" class="phone-input" id="phoneNumber" 
-               placeholder="93xxxxxxxxx" maxlength="12" dir="ltr">
-        <button class="btn btn-dark" onclick="connectWithPhone()">
-            📲 اتصال با شماره
-        </button>
-        
-        <div class="pairing-code" id="pairingBox">
-            <p>کد اتصال:</p>
-            <div class="code" id="pairingCode"></div>
-            <p style="font-size: 12px; color: #6c757d;">این کد را در واتساپ وارد کنید</p>
+    <div class="connect-page" id="connectPage">
+        <div class="connect-card">
+            <div class="connect-icon">💬</div>
+            <h1>اتصال به واتساپ</h1>
+            <p class="subtitle">برای شروع، یکی از روش‌های زیر را انتخاب کنید</p>
+            
+            <div class="status-text" id="statusText"></div>
+            
+            <div class="qr-box" id="qrBox">
+                <p class="qr-label">📱 QR Code را اسکن کنید</p>
+                <div id="qrContainer"></div>
+            </div>
+            
+            <button class="btn btn-primary" onclick="connect()">🔌 اتصال با QR Code</button>
+            
+            <div class="divider"><span>یا</span></div>
+            
+            <input type="tel" class="phone-input" id="phoneNumber" placeholder="93xxxxxxxxx" maxlength="12" dir="ltr">
+            <button class="btn btn-dark" onclick="connectWithPhone()">📲 اتصال با شماره</button>
+            
+            <div class="pairing-code" id="pairingBox">
+                <p>کد اتصال:</p>
+                <div class="code" id="pairingCode"></div>
+                <p style="font-size: 12px; color: #6c757d;">این کد را در واتساپ وارد کنید</p>
+            </div>
         </div>
     </div>
     
@@ -300,21 +310,63 @@
             <span class="badge">متصل</span>
         </div>
         
-        <div class="grid">
-            <div class="card">
-                <h2>📤 ارسال پیام</h2>
-                <input type="text" class="input" id="number" placeholder="شماره مقصد (93xxxxxxxxx)" dir="ltr">
-                <textarea class="textarea" id="message" placeholder="متن پیام..."></textarea>
-                <button class="btn btn-primary" onclick="sendMessage()">ارسال</button>
-            </div>
-            
-            <div class="card">
-                <h2>📋 پیام‌های دریافتی</h2>
-                <div class="messages" id="messagesLog">
-                    <p style="color: #6c757d; font-size: 13px;">پیامی نیست</p>
+        <!-- منو -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('home')">🏠 خانه</button>
+            <button class="tab" onclick="switchTab('send')">📤 ارسال پیام</button>
+            <button class="tab" onclick="switchTab('autoreply')">🤖 پاسخ خودکار</button>
+            <button class="tab" onclick="switchTab('settings')">⚙️ تنظیمات</button>
+        </div>
+        
+        <!-- خانه -->
+        <div class="tab-content active" id="tab-home">
+            <div class="grid-2">
+                <div class="card">
+                    <h2>📋 پیام‌های دریافتی</h2>
+                    <div class="messages" id="messagesLog">
+                        <p style="color: #6c757d; font-size: 13px;">پیامی نیست</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2>📊 آمار</h2>
+                    <div id="stats">
+                        <p>پیام‌های دریافتی: <span id="msgCount">0</span></p>
+                        <p>پاسخ‌های خودکار: <span id="autoReplyCount">0</span></p>
+                    </div>
                 </div>
             </div>
+        </div>
+        
+        <!-- ارسال پیام -->
+        <div class="tab-content" id="tab-send">
+            <div class="card">
+                <h2>📤 ارسال پیام جدید</h2>
+                <input type="text" class="input" id="number" placeholder="شماره مقصد (93xxxxxxxxx)" dir="ltr">
+                <textarea class="textarea" id="message" placeholder="متن پیام..."></textarea>
+                <button class="btn btn-primary" onclick="sendMessage()">ارسال پیام</button>
+            </div>
+        </div>
+        
+        <!-- پاسخ خودکار -->
+        <div class="tab-content" id="tab-autoreply">
+            <div class="card">
+                <h2>🤖 تنظیم پاسخ خودکار</h2>
+                <h3>افزودن پاسخ جدید</h3>
+                <input type="text" class="input" id="keyword" placeholder="کلمه کلیدی (مثلاً: سلام)">
+                <textarea class="textarea" id="autoResponse" placeholder="پاسخ خودکار..."></textarea>
+                <button class="btn btn-primary" onclick="addAutoReply()">➕ افزودن</button>
+            </div>
             
+            <div class="card">
+                <h2>📋 پاسخ‌های فعال</h2>
+                <div id="autoReplyList">
+                    <p style="color: #6c757d; font-size: 13px;">پاسخی تنظیم نشده</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- تنظیمات -->
+        <div class="tab-content" id="tab-settings">
             <div class="card">
                 <h2>🔐 تغییر PIN</h2>
                 <input type="password" class="input" id="oldPin" placeholder="PIN فعلی" maxlength="6">
@@ -322,8 +374,9 @@
                 <button class="btn btn-dark" onclick="changePin()">تغییر PIN</button>
             </div>
             
-            <div class="card full-width" style="text-align: center;">
-                <button class="btn btn-danger" onclick="disconnect()">❌ قطع اتصال</button>
+            <div class="card">
+                <h2>❌ قطع اتصال</h2>
+                <button class="btn btn-danger" onclick="disconnect()">قطع اتصال از واتساپ</button>
             </div>
         </div>
     </div>
@@ -331,13 +384,14 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
+        let msgCount = 0;
+        let autoReplyCount = 0;
         
         // Enter key برای PIN
         document.getElementById('pinInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') verifyPin();
         });
         
-        // بررسی PIN
         function verifyPin() {
             const pin = document.getElementById('pinInput').value;
             
@@ -350,6 +404,7 @@
             .then(data => {
                 if (data.success) {
                     checkConnection();
+                    loadAutoReplies();
                 } else {
                     alert('❌ PIN اشتباه است');
                     document.getElementById('pinInput').value = '';
@@ -357,7 +412,6 @@
             });
         }
         
-        // بررسی وضعیت اتصال بعد از PIN
         function checkConnection() {
             fetch('/status')
                 .then(r => r.json())
@@ -372,7 +426,7 @@
         
         function showConnectPage() {
             document.getElementById('pinPage').style.display = 'none';
-            document.getElementById('connectPage').style.display = 'block';
+            document.getElementById('connectPage').style.display = 'flex';
             document.getElementById('dashboard').style.display = 'none';
         }
         
@@ -382,7 +436,14 @@
             document.getElementById('dashboard').style.display = 'block';
         }
         
-        // تغییر PIN
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
         function changePin() {
             const oldPin = document.getElementById('oldPin').value;
             const newPin = document.getElementById('newPin').value;
@@ -401,6 +462,65 @@
                     document.getElementById('oldPin').value = '';
                     document.getElementById('newPin').value = '';
                 }
+            });
+        }
+        
+        // پاسخ خودکار
+        function addAutoReply() {
+            const keyword = document.getElementById('keyword').value;
+            const response = document.getElementById('autoResponse').value;
+            
+            if (!keyword || !response) return alert('کلمه کلیدی و پاسخ را وارد کنید');
+            
+            fetch('/add-auto-reply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ keyword, response })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ پاسخ اضافه شد');
+                    document.getElementById('keyword').value = '';
+                    document.getElementById('autoResponse').value = '';
+                    loadAutoReplies();
+                }
+            });
+        }
+        
+        function loadAutoReplies() {
+            fetch('/get-auto-replies')
+                .then(r => r.json())
+                .then(data => {
+                    const list = document.getElementById('autoReplyList');
+                    
+                    if (data.replies && data.replies.length > 0) {
+                        list.innerHTML = '';
+                        data.replies.forEach((reply, index) => {
+                            const div = document.createElement('div');
+                            div.className = 'auto-reply-item';
+                            div.innerHTML = `
+                                <div>
+                                    <span class="keyword">${reply.keyword}</span>
+                                    <span class="response">→ ${reply.response}</span>
+                                </div>
+                                <button class="btn btn-danger btn-sm" onclick="deleteAutoReply('${reply.keyword}')">حذف</button>
+                            `;
+                            list.appendChild(div);
+                        });
+                    }
+                });
+        }
+        
+        function deleteAutoReply(keyword) {
+            fetch('/delete-auto-reply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ keyword })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) loadAutoReplies();
             });
         }
         
@@ -432,6 +552,9 @@
                             <br>${data.message}`;
             log.appendChild(div);
             log.scrollTop = log.scrollHeight;
+            
+            msgCount++;
+            document.getElementById('msgCount').textContent = msgCount;
         });
         
         function connect() {
