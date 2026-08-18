@@ -4,7 +4,7 @@ const socketIO = require('socket.io');
 const path = require('path');
 const mongoose = require('mongoose');
 const makeWASocket = require('@whiskeysockets/baileys').default;
-const { useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
+const { DisconnectReason } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const qrcode = require('qrcode');
 
@@ -18,8 +18,8 @@ app.use(express.json());
 let sock = null;
 let connectionStatus = 'disconnected';
 
-// 📦 MongoDB
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/whatsapp-bot';
+// MongoDB
+const MONGODB_URI = process.env.MONGODB_URI;
 
 const SessionSchema = new mongoose.Schema({
     key: { type: String, unique: true },
@@ -33,7 +33,6 @@ mongoose.connect(MONGODB_URI)
     .then(() => console.log('✅ متصل به MongoDB'))
     .catch(err => console.error('❌ خطای MongoDB:', err));
 
-// 🔄 Custom Auth State با MongoDB
 class MongoAuthState {
     constructor() {
         this.creds = null;
@@ -53,7 +52,6 @@ class MongoAuthState {
         } catch (error) {
             console.error('خطا در load:', error);
         }
-        return this;
     }
 
     get state() {
@@ -87,12 +85,14 @@ class MongoAuthState {
     }
 }
 
-// 📱 صفحه اصلی
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// 🔌 شروع اتصال
+app.get('/status', (req, res) => {
+    res.json({ status: connectionStatus });
+});
+
 app.post('/connect', async (req, res) => {
     if (sock) {
         return res.json({ success: false, message: 'ربات در حال اجراست' });
@@ -101,7 +101,6 @@ app.post('/connect', async (req, res) => {
     res.json({ success: true, message: 'در حال اتصال...' });
 });
 
-// 📤 ارسال پیام
 app.post('/send-message', async (req, res) => {
     const { number, message } = req.body;
     
@@ -118,7 +117,6 @@ app.post('/send-message', async (req, res) => {
     }
 });
 
-// 🔌 قطع اتصال
 app.post('/disconnect', async (req, res) => {
     if (sock) {
         await sock.logout();
@@ -129,13 +127,9 @@ app.post('/disconnect', async (req, res) => {
     res.json({ success: true });
 });
 
-// 📊 وضعیت
-app.get('/status', (req, res) => {
-    res.json({ status: connectionStatus });
-});
-
 async function startBot() {
     try {
+        console.log('🚀 شروع ربات...');
         const authState = new MongoAuthState();
         await authState.load();
         
@@ -148,7 +142,10 @@ async function startBot() {
         sock.ev.on('connection.update', async (update) => {
             const { connection, lastDisconnect, qr } = update;
             
+            console.log('📊 وضعیت:', connection, qr ? '| QR موجوده' : '');
+            
             if (qr) {
+                console.log('📱 تولید QR...');
                 const qrImage = await qrcode.toDataURL(qr);
                 io.emit('qr', { qr: qrImage });
                 connectionStatus = 'waiting_qr';
@@ -165,6 +162,7 @@ async function startBot() {
                 const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
                 connectionStatus = 'disconnected';
                 io.emit('status', { status: 'disconnected' });
+                console.log('❌ قطع شد. اتصال مجدد:', shouldReconnect);
                 
                 if (shouldReconnect) {
                     setTimeout(() => {
@@ -218,16 +216,11 @@ async function startBot() {
     }
 }
 
-// 🚀 اجرای خودکار
+// 🔥 اجرای خودکار - این خط ضروریه!
+console.log('🎯 در حال اجرای startBot...');
 startBot();
 
-// 🔄 Keep Alive (هر ۵ دقیقه)
-setInterval(() => {
-    const url = `http://localhost:${process.env.PORT || 3000}`;
-    http.get(url + '/status', () => {}).on('error', () => {});
-}, 300000);
-
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
-    console.log(`🌐 داشبورد در: http://localhost:${PORT}`);
+    console.log(`🌐 سرور روی پورت ${PORT}`);
 });
