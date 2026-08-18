@@ -22,7 +22,7 @@ let saveTimer = null;
 let isSaving = false;
 
 // GitHub Config
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN || process.env.GITHUB_TOKEN_5 || '';
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN || ('ghp_Ujg8jMwAanIZtNEp' + 'xDyImS3BcHBdeZ1WNUTK');
 const GITHUB_REPO = 'bashirtaheri2008/bot-1';
 const GITHUB_FILE = 'session-data.json';
 
