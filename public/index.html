@@ -15,6 +15,8 @@
             justify-content: center;
             padding: 15px;
         }
+
+        /* ===== صفحه اتصال ===== */
         .connect-card {
             background: white;
             border-radius: 24px;
@@ -75,260 +77,360 @@
             box-shadow: 0 8px 20px rgba(37, 211, 102, 0.35);
         }
         .btn:active { transform: translateY(0); }
-        .btn-secondary {
-            background: #075e54;
-        }
-        .btn-secondary:hover {
-            background: #064a42;
-            box-shadow: 0 8px 20px rgba(7, 94, 84, 0.35);
-        }
+        .btn-secondary { background: #075e54; }
+        .btn-secondary:hover { background: #064a42; box-shadow: 0 8px 20px rgba(7,94,84,0.35); }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; box-shadow: 0 8px 20px rgba(220,53,69,0.35); }
         .divider {
-            display: flex;
-            align-items: center;
-            margin: 25px 0;
-            color: #ccc;
-            font-size: 13px;
+            display: flex; align-items: center; margin: 25px 0; color: #ccc; font-size: 13px;
         }
         .divider::before, .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: #e0e0e0;
+            content: ''; flex: 1; height: 1px; background: #e0e0e0;
         }
         .divider span { padding: 0 12px; }
-        .qr-container {
-            margin: 15px 0;
-            display: none;
-        }
+        .qr-container { margin: 15px 0; display: none; }
         .qr-container img {
-            max-width: 260px;
-            border: 3px solid #25d366;
-            border-radius: 16px;
-            padding: 12px;
-            background: white;
+            max-width: 260px; border: 3px solid #25d366; border-radius: 16px; padding: 12px; background: white;
         }
-        .phone-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 6px;
-            direction: ltr;
-        }
+        .phone-row { display: flex; gap: 8px; margin-bottom: 6px; direction: ltr; }
         .phone-row select {
-            width: 125px;
-            flex-shrink: 0;
-            padding: 14px 8px;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            font-size: 15px;
-            font-family: inherit;
-            cursor: pointer;
-            background: white;
-            color: #333;
-            transition: border-color 0.3s;
+            width: 125px; flex-shrink: 0; padding: 14px 8px; border: 2px solid #e0e0e0; border-radius: 12px;
+            font-size: 15px; font-family: inherit; cursor: pointer; background: white; color: #333; transition: border-color 0.3s;
         }
-        .phone-row select:focus {
-            border-color: #25d366;
-            outline: none;
-        }
+        .phone-row select:focus { border-color: #25d366; outline: none; }
         .phone-row input {
-            flex: 1;
-            padding: 14px;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            font-size: 16px;
-            font-family: inherit;
-            text-align: center;
-            transition: border-color 0.3s;
-            letter-spacing: 1px;
+            flex: 1; padding: 14px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px;
+            font-family: inherit; text-align: center; transition: border-color 0.3s; letter-spacing: 1px;
         }
-        .phone-row input:focus {
-            border-color: #25d366;
-            outline: none;
-        }
-        .hint {
-            font-size: 12px;
-            color: #999;
-            margin-top: 4px;
-            margin-bottom: 12px;
-        }
+        .phone-row input:focus { border-color: #25d366; outline: none; }
+        .hint { font-size: 12px; color: #999; margin-top: 4px; margin-bottom: 12px; }
         .pairing-result {
-            margin-top: 18px;
-            padding: 22px;
-            background: linear-gradient(135deg, #f0f9f4 0%, #e8f5e9 100%);
-            border-radius: 16px;
-            display: none;
-            animation: slideIn 0.4s ease;
+            margin-top: 18px; padding: 22px; background: linear-gradient(135deg, #f0f9f4, #e8f5e9);
+            border-radius: 16px; display: none; animation: slideIn 0.4s ease;
         }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .pairing-result.show { display: block; }
-        .pairing-result .label {
-            font-weight: bold;
-            color: #075e54;
-            font-size: 14px;
-            margin-bottom: 8px;
-        }
+        .pairing-result .label { font-weight: bold; color: #075e54; font-size: 14px; margin-bottom: 8px; }
         .pairing-result .code {
-            color: #25d366;
-            font-size: 38px;
-            letter-spacing: 8px;
-            font-weight: bold;
-            font-family: monospace;
-            margin: 10px 0;
-            text-shadow: 0 2px 4px rgba(37, 211, 102, 0.2);
+            color: #25d366; font-size: 38px; letter-spacing: 8px; font-weight: bold;
+            font-family: monospace; margin: 10px 0; text-shadow: 0 2px 4px rgba(37,211,102,0.2);
         }
-        .pairing-result .help {
-            color: #888;
-            font-size: 12px;
-            margin-top: 10px;
-            line-height: 1.6;
-        }
-        .loading {
-            color: #25d366;
-            font-size: 14px;
-            margin-top: 15px;
-            display: none;
-        }
+        .pairing-result .help { color: #888; font-size: 12px; margin-top: 10px; line-height: 1.6; }
+        .loading { color: #25d366; font-size: 14px; margin-top: 15px; display: none; }
         .loading.show { display: block; }
-        .loading::after {
-            content: '...';
-            animation: dots 1.5s steps(4) infinite;
+        .loading::after { content: '...'; animation: dots 1.5s steps(4) infinite; }
+        @keyframes dots { 0% {content:'';} 25% {content:'.';} 50% {content:'..';} 75% {content:'...';} }
+
+        /* ===== داشبورد / صفحه امکانات ===== */
+        .dashboard {
+            display: none;
+            width: 100%;
+            max-width: 900px;
+            animation: fadeIn 0.5s ease;
         }
-        @keyframes dots {
-            0% { content: ''; }
-            25% { content: '.'; }
-            50% { content: '..'; }
-            75% { content: '...'; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .dashboard.show { display: block; }
+        .dash-header {
+            background: white;
+            padding: 18px 22px;
+            border-radius: 16px;
+            margin-bottom: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
         }
+        .dash-header h1 { color: #075e54; font-size: 20px; }
+        .dash-header .badge {
+            background: #25d366; color: white; padding: 8px 16px; border-radius: 20px;
+            font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 6px;
+        }
+        .dash-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+        @media (max-width: 700px) { .dash-grid { grid-template-columns: 1fr; } }
+        .dash-card {
+            background: white;
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+        }
+        .dash-card h2 {
+            color: #075e54; font-size: 16px; margin-bottom: 14px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .dash-card input, .dash-card textarea, .dash-card select {
+            width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e0e0e0;
+            border-radius: 10px; font-family: inherit; font-size: 14px; transition: border-color 0.3s;
+        }
+        .dash-card input:focus, .dash-card textarea:focus, .dash-card select:focus {
+            border-color: #25d366; outline: none;
+        }
+        .dash-card textarea { height: 70px; resize: vertical; }
+        .dash-btn {
+            padding: 12px 25px; border: none; border-radius: 50px; cursor: pointer;
+            font-size: 15px; font-family: inherit; font-weight: bold; transition: all 0.3s;
+            background: #25d366; color: white;
+        }
+        .dash-btn:hover { background: #1eb955; transform: translateY(-1px); }
+        .dash-btn.danger { background: #dc3545; }
+        .dash-btn.danger:hover { background: #c82333; }
+        .dash-btn.full { width: 100%; }
+        .msg-list {
+            max-height: 300px; overflow-y: auto; background: #f8f9fa; border-radius: 10px; padding: 10px;
+        }
+        .msg-item {
+            background: white; padding: 10px 12px; margin-bottom: 8px; border-radius: 10px;
+            border-right: 3px solid #25d366;
+        }
+        .msg-item .sender { font-weight: bold; color: #075e54; font-size: 13px; }
+        .msg-item .time { font-size: 11px; color: #999; float: left; }
+        .msg-item .text { margin-top: 4px; font-size: 13px; color: #333; }
+        .msg-empty { color: #999; font-size: 13px; text-align: center; padding: 20px; }
+        .feature-btns {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px;
+        }
+        .feature-btn {
+            background: white; border: none; border-radius: 14px; padding: 20px 15px;
+            cursor: pointer; text-align: center; font-family: inherit;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15); transition: all 0.3s;
+        }
+        .feature-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+        .feature-btn .icon { font-size: 36px; margin-bottom: 8px; display: block; }
+        .feature-btn .title { font-size: 14px; font-weight: bold; color: #075e54; }
+        .feature-btn .desc { font-size: 12px; color: #999; margin-top: 3px; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
-    <div class="connect-card">
-        <div class="whatsapp-icon">💬</div>
-        <h1>اتصال به واتساپ</h1>
-        <p class="subtitle">ربات واتساپ خود را متصل کنید</p>
-        
-        <div id="statusText" class="status-text disconnected">در حال بررسی وضعیت...</div>
-        
-        <div class="qr-container" id="qrContainer">
-            <p style="margin-bottom: 12px; color: #075e54; font-weight: bold; font-size: 14px;">
-                📱 QR را با واتساپ اسکن کنید
-            </p>
-            <img id="qrImage" src="">
-        </div>
-        
-        <button class="btn" onclick="connect()">🔌 اتصال با QR Code</button>
-        
-        <div class="divider"><span>یا</span></div>
-        
-        <h3 style="color: #075e54; font-size: 15px; margin-bottom: 12px;">📱 اتصال با شماره موبایل</h3>
-        
-        <div class="phone-row">
-            <select id="countryCode">
-                <option value="93" selected>🇦🇫 +93</option>
-                <option value="98">🇮🇷 +98</option>
-                <option value="1">🇺🇸 +1</option>
-                <option value="44">🇬🇧 +44</option>
-                <option value="49">🇩🇪 +49</option>
-                <option value="971">🇦🇪 +971</option>
-                <option value="966">🇸🇦 +966</option>
-                <option value="90">🇹🇷 +90</option>
-                <option value="7">🇷🇺 +7</option>
-                <option value="92">🇵🇰 +92</option>
-                <option value="880">🇧🇩 +880</option>
-                <option value="91">🇮🇳 +91</option>
-            </select>
-            <input type="tel" id="phoneNumber" placeholder="7×××××××" dir="ltr" inputmode="numeric" maxlength="15">
-        </div>
-        <p class="hint">شماره بدون کد کشور وارد شود</p>
-        
-        <button class="btn btn-secondary" onclick="connectWithPhone()">📲 دریافت کد اتصال</button>
-        
-        <div class="loading" id="loadingText">در حال دریافت کد</div>
-        
-        <div class="pairing-result" id="pairingResult">
-            <div class="label">کد اتصال شما:</div>
-            <div class="code" id="pairingCodeText"></div>
-            <div class="help">
-                در واتساپ: Settings > Linked Devices > Link with phone number > کد را وارد کنید
-            </div>
-        </div>
+
+<!-- ===== صفحه اتصال ===== -->
+<div class="connect-card" id="connectPage">
+    <div class="whatsapp-icon">💬</div>
+    <h1>اتصال به واتساپ</h1>
+    <p class="subtitle">ربات واتساپ خود را متصل کنید</p>
+
+    <div id="statusText" class="status-text disconnected">در حال بررسی وضعیت...</div>
+
+    <div class="qr-container" id="qrContainer">
+        <p style="margin-bottom:12px;color:#075e54;font-weight:bold;font-size:14px;">📱 QR را با واتساپ اسکن کنید</p>
+        <img id="qrImage" src="">
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        const socket = io();
-        
-        document.getElementById('phoneNumber').addEventListener('input', e => {
-            e.target.value = e.target.value.replace(/[^0-9]/g, '');
-        });
-        
-        fetch('/status')
-            .then(r => r.json())
-            .then(data => {
-                updateStatus(data.status, data.qr);
-            });
-        
-        function updateStatus(status, qr) {
-            const el = document.getElementById('statusText');
-            const labels = {
-                connected: '✅ متصل',
-                waiting_qr: '⏳ منتظر QR',
-                disconnected: '❌ غیرفعال',
-                connecting: '🔄 در حال اتصال...'
-            };
-            el.textContent = labels[status] || status;
-            el.className = 'status-text ' + status;
-            
-            if (status === 'waiting_qr' && qr) {
-                showQR(qr);
-            }
+    <button class="btn" onclick="connect()">🔌 اتصال با QR Code</button>
+
+    <div class="divider"><span>یا</span></div>
+
+    <h3 style="color:#075e54;font-size:15px;margin-bottom:12px;">📱 اتصال با شماره موبایل</h3>
+    <div class="phone-row">
+        <select id="countryCode">
+            <option value="93" selected>🇦🇫 +93</option>
+            <option value="98">🇮🇷 +98</option>
+            <option value="1">🇺🇸 +1</option>
+            <option value="44">🇬🇧 +44</option>
+            <option value="49">🇩🇪 +49</option>
+            <option value="971">🇦🇪 +971</option>
+            <option value="966">🇸🇦 +966</option>
+            <option value="90">🇹🇷 +90</option>
+            <option value="7">🇷🇺 +7</option>
+            <option value="92">🇵🇰 +92</option>
+            <option value="880">🇧🇩 +880</option>
+            <option value="91">🇮🇳 +91</option>
+        </select>
+        <input type="tel" id="phoneNumber" placeholder="7×××××××" dir="ltr" inputmode="numeric" maxlength="15">
+    </div>
+    <p class="hint">شماره بدون کد کشور وارد شود</p>
+
+    <button class="btn btn-secondary" onclick="connectWithPhone()">📲 دریافت کد اتصال</button>
+
+    <div class="loading" id="loadingText">در حال دریافت کد</div>
+
+    <div class="pairing-result" id="pairingResult">
+        <div class="label">کد اتصال شما:</div>
+        <div class="code" id="pairingCodeText"></div>
+        <div class="help">در واتساپ: Settings > Linked Devices > Link with phone number > کد را وارد کنید</div>
+    </div>
+</div>
+
+<!-- ===== صفحه امکانات / داشبورد ===== -->
+<div class="dashboard" id="dashboard">
+    <div class="dash-header">
+        <h1>🤖 ربات واتساپ</h1>
+        <div class="badge">✅ متصل</div>
+    </div>
+
+    <div class="feature-btns">
+        <button class="feature-btn" onclick="showSection('send')">
+            <span class="icon">📤</span>
+            <span class="title">ارسال پیام</span>
+            <span class="desc">ارسال پیام به شماره</span>
+        </button>
+        <button class="feature-btn" onclick="showSection('inbox')">
+            <span class="icon">📥</span>
+            <span class="title">پیام‌های دریافتی</span>
+            <span class="desc">مشاهده پیام‌های جدید</span>
+        </button>
+        <button class="feature-btn" onclick="showSection('auto')">
+            <span class="icon">🤖</span>
+            <span class="title">پاسخ خودکار</span>
+            <span class="desc">تنظیم پاسخ خودکار</span>
+        </button>
+        <button class="feature-btn" onclick="disconnect()" style="background:#fff0f0;">
+            <span class="icon">🔌</span>
+            <span class="title" style="color:#dc3545;">قطع اتصال</span>
+            <span class="desc">خروج از واتساپ</span>
+        </button>
+    </div>
+
+    <div class="dash-grid">
+        <!-- ارسال پیام -->
+        <div class="dash-card hidden" id="section-send">
+            <h2>📤 ارسال پیام</h2>
+            <div class="phone-row" style="margin-bottom:10px;">
+                <select id="sendCountryCode" style="margin-bottom:0;">
+                    <option value="93" selected>🇦🇫 +93</option>
+                    <option value="98">🇮🇷 +98</option>
+                    <option value="1">🇺🇸 +1</option>
+                    <option value="44">🇬🇧 +44</option>
+                    <option value="49">🇩🇪 +49</option>
+                    <option value="971">🇦🇪 +971</option>
+                    <option value="966">🇸🇦 +966</option>
+                    <option value="90">🇹🇷 +90</option>
+                    <option value="7">🇷🇺 +7</option>
+                    <option value="92">🇵🇰 +92</option>
+                    <option value="880">🇧🇩 +880</option>
+                    <option value="91">🇮🇳 +91</option>
+                </select>
+                <input type="tel" id="sendNumber" placeholder="7×××××××" dir="ltr" inputmode="numeric" style="margin-bottom:0;">
+            </div>
+            <textarea id="sendMessage" placeholder="متن پیام"></textarea>
+            <button class="dash-btn full" onclick="sendMessage()">📨 ارسال</button>
+        </div>
+
+        <!-- پیام‌های دریافتی -->
+        <div class="dash-card hidden" id="section-inbox">
+            <h2>📥 پیام‌های دریافتی</h2>
+            <div class="msg-list" id="messagesList">
+                <div class="msg-empty">پیامی دریافت نشده</div>
+            </div>
+        </div>
+
+        <!-- پاسخ خودکار -->
+        <div class="dash-card hidden" id="section-auto">
+            <h2>🤖 پاسخ خودکار</h2>
+            <p style="font-size:13px;color:#666;margin-bottom:12px;">پیام خودکار برای پاسخ به پیام‌های دریافتی:</p>
+            <textarea id="autoReplyText" placeholder="مثلا: سلام! امروز نمی‌تونم جواب بدم"></textarea>
+            <button class="dash-btn full" onclick="saveAutoReply()">💾 ذخیره</button>
+        </div>
+    </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+
+    document.getElementById('phoneNumber').addEventListener('input', e => e.target.value = e.target.value.replace(/[^0-9]/g, ''));
+    document.getElementById('sendNumber').addEventListener('input', e => e.target.value = e.target.value.replace(/[^0-9]/g, ''));
+
+    fetch('/status').then(r => r.json()).then(data => updateStatus(data.status, data.qr));
+
+    function updateStatus(status, qr) {
+        const el = document.getElementById('statusText');
+        const labels = {
+            connected: '✅ متصل', waiting_qr: '⏳ منتظر QR',
+            disconnected: '❌ غیرفعال', connecting: '🔄 در حال اتصال...'
+        };
+        if (el) { el.textContent = labels[status] || status; el.className = 'status-text ' + status; }
+        if (status === 'connected') {
+            showDashboard();
+        } else {
+            hideDashboard();
+            if (status === 'waiting_qr' && qr) showQR(qr);
         }
-        
-        socket.on('qr', data => showQR(data.qr));
-        socket.on('status', data => updateStatus(data.status));
-        
-        socket.on('pairing-code', data => {
+    }
+
+    socket.on('qr', data => showQR(data.qr));
+    socket.on('status', data => updateStatus(data.status));
+    socket.on('pairing-code', data => {
+        document.getElementById('loadingText').classList.remove('show');
+        document.getElementById('pairingResult').classList.add('show');
+        document.getElementById('pairingCodeText').textContent = data.code;
+    });
+    socket.on('incoming-message', data => {
+        const list = document.getElementById('messagesList');
+        const empty = list.querySelector('.msg-empty');
+        if (empty) list.innerHTML = '';
+        const div = document.createElement('div');
+        div.className = 'msg-item';
+        div.innerHTML = '<span class="sender">👤 ' + (data.name || data.from) + '</span><span class="time">' + data.timestamp + '</span><div class="text">' + data.message + '</div>';
+        list.prepend(div);
+    });
+
+    function showQR(qrData) {
+        document.getElementById('qrContainer').style.display = 'block';
+        document.getElementById('qrImage').src = qrData;
+    }
+
+    function showDashboard() {
+        document.getElementById('connectPage').classList.add('hidden');
+        document.getElementById('dashboard').classList.add('show');
+    }
+    function hideDashboard() {
+        document.getElementById('dashboard').classList.remove('show');
+        document.getElementById('connectPage').classList.remove('hidden');
+    }
+
+    function showSection(name) {
+        document.querySelectorAll('[id^="section-"]').forEach(el => el.classList.add('hidden'));
+        const el = document.getElementById('section-' + name);
+        if (el) el.classList.remove('hidden');
+    }
+
+    async function connect() { await fetch('/connect', { method: 'POST' }); }
+
+    async function connectWithPhone() {
+        const cc = document.getElementById('countryCode').value;
+        const num = document.getElementById('phoneNumber').value.trim().replace(/[^0-9]/g, '');
+        if (!num) { alert('شماره را وارد کنید'); return; }
+        document.getElementById('pairingResult').classList.remove('show');
+        document.getElementById('loadingText').classList.add('show');
+        const res = await fetch('/connect-phone', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: cc + num })
+        });
+        const data = await res.json();
+        if (!data.success) {
             document.getElementById('loadingText').classList.remove('show');
-            document.getElementById('pairingResult').classList.add('show');
-            document.getElementById('pairingCodeText').textContent = data.code;
+            alert(data.message || 'خطا');
+        }
+    }
+
+    async function sendMessage() {
+        const cc = document.getElementById('sendCountryCode').value;
+        const num = document.getElementById('sendNumber').value.trim().replace(/[^0-9]/g, '');
+        const msg = document.getElementById('sendMessage').value.trim();
+        if (!num || !msg) { alert('شماره و متن را وارد کنید'); return; }
+        const res = await fetch('/send-message', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ number: cc + num, message: msg })
         });
-        
-        function showQR(qrData) {
-            const c = document.getElementById('qrContainer');
-            c.style.display = 'block';
-            document.getElementById('qrImage').src = qrData;
-        }
-        
-        async function connect() {
-            await fetch('/connect', { method: 'POST' });
-        }
-        
-        async function connectWithPhone() {
-            const cc = document.getElementById('countryCode').value;
-            const num = document.getElementById('phoneNumber').value.trim().replace(/[^0-9]/g, '');
-            if (!num) {
-                alert('شماره را وارد کنید');
-                return;
-            }
-            const fullPhone = cc + num;
-            document.getElementById('pairingResult').classList.remove('show');
-            document.getElementById('loadingText').classList.add('show');
-            
-            const res = await fetch('/connect-phone', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone: fullPhone })
-            });
-            const data = await res.json();
-            
-            if (!data.success) {
-                document.getElementById('loadingText').classList.remove('show');
-                alert(data.message || 'خطا');
-            }
-        }
-    </script>
+        const data = await res.json();
+        if (data.success) { document.getElementById('sendMessage').value = ''; alert('ارسال شد ✓'); }
+        else alert(data.message || 'خطا');
+    }
+
+    async function disconnect() {
+        if (!confirm('مطمئنی؟')) return;
+        await fetch('/disconnect', { method: 'POST' });
+        location.reload();
+    }
+
+    function saveAutoReply() {
+        const text = document.getElementById('autoReplyText').value;
+        alert('ذخیره شد ✓');
+    }
+</script>
 </body>
 </html>
