@@ -2,7 +2,6 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
-const mongoose = require('mongoose');
 const makeWASocket = require('@whiskeysockets/baileys').default;
 const { DisconnectReason } = require('@whiskeysockets/baileys');
 const pino = require('pino');
@@ -19,48 +18,50 @@ let sock = null;
 let connectionStatus = 'disconnected';
 let latestQR = null;
 
-// 📦 MongoDB Connection
-const MONGODB_URI = 'mongodb://admin:bashir2008@ac-4ft4dn9-shard-00-00.candod8.mongodb.net:27017,ac-4ft4dn9-shard-00-01.candod8.mongodb.net:27017,ac-4ft4dn9-shard-00-02.candod8.mongodb.net:27017/?ssl=true&replicaSet=atlas-3iisrr-shard-0&authSource=admin&appName=Cluster0';
+// 📦 Supabase Config
+const SUPABASE_URL = 'https://xdnnnhuxqpscjynmejum.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_CdhDddnsDaac97dU4x5uhg_ODSWyeXu';
 
-// Session Model
-const SessionSchema = new mongoose.Schema({
-    key: { type: String, unique: true },
-    value: mongoose.Schema.Types.Mixed,
-    updatedAt: { type: Date, default: Date.now }
-});
+async function saveSession(key, value) {
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/sessions`, {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify({
+                key: key,
+                value: value,
+                updated_at: new Date().toISOString()
+            })
+        });
+    } catch (error) {
+        console.error('خطا در ذخیره:', error);
+    }
+}
 
-const Session = mongoose.model('Session', SessionSchema);
+async function loadSession(key) {
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/sessions?key=eq.${key}&select=value`, {
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`
+            }
+        });
+        const data = await response.json();
+        return data[0]?.value || null;
+    } catch (error) {
+        console.error('خطا در خواندن:', error);
+        return null;
+    }
+}
 
-mongoose.connect(MONGODB_URI)
-    .then(() => console.log('✅ متصل به MongoDB'))
-    .catch(err => console.error('❌ خطای MongoDB:', err));
-
-// 🔄 استفاده از MongoDB برای auth state
-async function useMongoAuthState() {
-    const writeData = async (key, value) => {
-        try {
-            await Session.findOneAndUpdate(
-                { key },
-                { key, value, updatedAt: new Date() },
-                { upsert: true }
-            );
-        } catch (error) {
-            console.error('خطا در ذخیره:', error);
-        }
-    };
-
-    const readData = async (key) => {
-        try {
-            const doc = await Session.findOne({ key });
-            return doc ? doc.value : null;
-        } catch (error) {
-            console.error('خطا در خواندن:', error);
-            return null;
-        }
-    };
-
-    const creds = (await readData('creds')) || {};
-    const keys = (await readData('keys')) || {};
+async function useSupabaseAuthState() {
+    const creds = (await loadSession('creds')) || {};
+    const keys = (await loadSession('keys')) || {};
 
     return {
         state: {
@@ -73,19 +74,17 @@ async function useMongoAuthState() {
                 set: async (data) => {
                     for (const [key, value] of Object.entries(data)) {
                         keys[key] = value;
-                        await writeData(`key_${key}`, value);
                     }
-                    await writeData('keys', keys);
+                    await saveSession('keys', keys);
                 }
             }
         },
         saveCreds: async () => {
-            await writeData('creds', creds);
+            await saveSession('creds', creds);
         }
     };
 }
 
-// 📱 Routes
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -129,13 +128,12 @@ app.post('/disconnect', async (req, res) => {
     res.json({ success: true });
 });
 
-// 🤖 شروع ربات
 async function startBot() {
     if (sock) return;
     
     try {
         console.log('🚀 شروع ربات...');
-        const { state, saveCreds } = await useMongoAuthState();
+        const { state, saveCreds } = await useSupabaseAuthState();
         
         sock = makeWASocket({
             auth: state,
@@ -218,10 +216,8 @@ async function startBot() {
     }
 }
 
-// 🚀 اجرای خودکار
 startBot();
 
-// 🌐 سرور
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
     console.log(`🌐 سرور روی پورت ${PORT}`);
