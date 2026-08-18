@@ -30,13 +30,13 @@
         .header-icon {
             width: 70px;
             height: 70px;
-            background: #25d366;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 15px;
             font-size: 35px;
+            background: #075e54;
         }
         
         h1 {
@@ -49,6 +49,23 @@
             color: #6c757d;
             font-size: 14px;
             margin-bottom: 20px;
+        }
+        
+        .pin-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 24px;
+            font-family: inherit;
+            text-align: center;
+            letter-spacing: 15px;
+            margin: 15px 0;
+            direction: ltr;
+        }
+        .pin-input:focus {
+            border-color: #25d366;
+            outline: none;
         }
         
         .status-text {
@@ -95,22 +112,11 @@
             margin: 5px 0;
         }
         
-        .btn-primary {
-            background: #25d366;
-            color: white;
-        }
+        .btn-primary { background: #25d366; color: white; }
         .btn-primary:hover { background: #1eb955; }
-        
-        .btn-dark {
-            background: #075e54;
-            color: white;
-        }
+        .btn-dark { background: #075e54; color: white; }
         .btn-dark:hover { background: #064a42; }
-        
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
+        .btn-danger { background: #dc3545; color: white; }
         .btn-danger:hover { background: #c82333; }
         
         .divider {
@@ -243,8 +249,20 @@
     </style>
 </head>
 <body>
+    <!-- صفحه PIN -->
+    <div class="main-card" id="pinPage">
+        <div class="header-icon">🔐</div>
+        <h1>ورود به داشبورد</h1>
+        <p class="subtitle">PIN خود را وارد کنید</p>
+        
+        <input type="password" class="pin-input" id="pinInput" 
+               maxlength="6" placeholder="••••" inputmode="numeric">
+        
+        <button class="btn btn-primary" onclick="verifyPin()">ورود</button>
+    </div>
+    
     <!-- صفحه اتصال -->
-    <div class="main-card" id="connectPage">
+    <div class="main-card" id="connectPage" style="display: none;">
         <div class="header-icon">💬</div>
         <h1>اتصال به واتساپ</h1>
         <p class="subtitle">برای شروع، یکی از روش‌های زیر را انتخاب کنید</p>
@@ -297,6 +315,13 @@
                 </div>
             </div>
             
+            <div class="card">
+                <h2>🔐 تغییر PIN</h2>
+                <input type="password" class="input" id="oldPin" placeholder="PIN فعلی" maxlength="6">
+                <input type="password" class="input" id="newPin" placeholder="PIN جدید" maxlength="6">
+                <button class="btn btn-dark" onclick="changePin()">تغییر PIN</button>
+            </div>
+            
             <div class="card full-width" style="text-align: center;">
                 <button class="btn btn-danger" onclick="disconnect()">❌ قطع اتصال</button>
             </div>
@@ -307,19 +332,81 @@
     <script>
         const socket = io();
         
-        // بررسی وضعیت - فقط اگه متصله داشبورد رو نشون بده
-        fetch('/status')
+        // Enter key برای PIN
+        document.getElementById('pinInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') verifyPin();
+        });
+        
+        // بررسی PIN
+        function verifyPin() {
+            const pin = document.getElementById('pinInput').value;
+            
+            fetch('/verify-pin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pin })
+            })
             .then(r => r.json())
             .then(data => {
-                if (data.status === 'connected') {
-                    showDashboard();
+                if (data.success) {
+                    checkConnection();
+                } else {
+                    alert('❌ PIN اشتباه است');
+                    document.getElementById('pinInput').value = '';
                 }
             });
+        }
         
-        // QR فقط وقتی کاربر دکمه رو زده باشه
+        // بررسی وضعیت اتصال بعد از PIN
+        function checkConnection() {
+            fetch('/status')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'connected') {
+                        showDashboard();
+                    } else {
+                        showConnectPage();
+                    }
+                });
+        }
+        
+        function showConnectPage() {
+            document.getElementById('pinPage').style.display = 'none';
+            document.getElementById('connectPage').style.display = 'block';
+            document.getElementById('dashboard').style.display = 'none';
+        }
+        
+        function showDashboard() {
+            document.getElementById('pinPage').style.display = 'none';
+            document.getElementById('connectPage').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+        }
+        
+        // تغییر PIN
+        function changePin() {
+            const oldPin = document.getElementById('oldPin').value;
+            const newPin = document.getElementById('newPin').value;
+            
+            if (!oldPin || !newPin) return alert('هر دو فیلد را پر کنید');
+            
+            fetch('/change-pin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ oldPin, newPin })
+            })
+            .then(r => r.json())
+            .then(data => {
+                alert(data.success ? '✅ PIN تغییر کرد' : '❌ ' + data.message);
+                if (data.success) {
+                    document.getElementById('oldPin').value = '';
+                    document.getElementById('newPin').value = '';
+                }
+            });
+        }
+        
         socket.on('qr', (data) => {
             if (document.getElementById('qrBox').style.display === 'block') {
-                showQR(data.qr);
+                document.getElementById('qrContainer').innerHTML = `<img src="${data.qr}">`;
             }
         });
         
@@ -346,15 +433,6 @@
             log.appendChild(div);
             log.scrollTop = log.scrollHeight;
         });
-        
-        function showQR(qr) {
-            document.getElementById('qrContainer').innerHTML = `<img src="${qr}">`;
-        }
-        
-        function showDashboard() {
-            document.getElementById('connectPage').style.display = 'none';
-            document.getElementById('dashboard').style.display = 'block';
-        }
         
         function connect() {
             document.getElementById('statusText').style.display = 'block';
@@ -404,4 +482,4 @@
         }
     </script>
 </body>
-</html>
+    </html>
