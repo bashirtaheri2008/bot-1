@@ -432,10 +432,8 @@
                 </div>
                 
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">شخص تأییدکننده (صاحب کارت):</label>
-                    <select id="contactSelect" class="input">
-                        <option value="">انتخاب مخاطب...</option>
-                    </select>
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">شماره صاحب کارت (تأییدکننده):</label>
+                    <input type="tel" class="input" id="targetNumber" placeholder="مثلاً: 93xxxxxxxxx" dir="ltr" maxlength="15">
                 </div>
                 
                 <button class="btn btn-primary" onclick="saveCheckConfig()">💾 ذخیره تنظیمات</button>
@@ -544,7 +542,7 @@
             document.getElementById('checkSection').style.display = 'block';
             document.getElementById('shopSection').style.display = 'none';
             loadCheckConfig();
-            loadGroupsAndContacts();
+            loadGroups();
         }
         
         function showShop() {
@@ -558,7 +556,10 @@
             checkActive = config.active;
             updateToggleBtn();
             document.getElementById('groupSelect').value = config.groupJid || '';
-            document.getElementById('contactSelect').value = config.targetJid || '';
+            
+            if (config.targetJid) {
+                document.getElementById('targetNumber').value = config.targetJid.replace('@c.us', '');
+            }
         }
         
         function updateToggleBtn() {
@@ -582,8 +583,7 @@
             });
         }
         
-        async function loadGroupsAndContacts() {
-            // گروه‌ها
+        async function loadGroups() {
             const groupsRes = await fetch('/get-groups');
             const groupsData = await groupsRes.json();
             const groupSelect = document.getElementById('groupSelect');
@@ -597,35 +597,27 @@
                 });
             }
             
-            // مخاطبین
-            const contactsRes = await fetch('/get-contacts');
-            const contactsData = await contactsRes.json();
-            const contactSelect = document.getElementById('contactSelect');
-            contactSelect.innerHTML = '<option value="">انتخاب مخاطب...</option>';
-            if (contactsData.contacts) {
-                contactsData.contacts.forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c.jid;
-                    opt.textContent = c.name;
-                    contactSelect.appendChild(opt);
-                });
-            }
-            
-            // بعد از بارگذاری، مقادیر ذخیره شده رو اعمال کن
+            // اعمال مقدار ذخیره شده
             const configRes = await fetch('/get-check-config');
             const config = await configRes.json();
             groupSelect.value = config.groupJid || '';
-            contactSelect.value = config.targetJid || '';
         }
         
         async function saveCheckConfig() {
             const groupJid = document.getElementById('groupSelect').value;
-            const targetJid = document.getElementById('contactSelect').value;
+            const targetNumber = document.getElementById('targetNumber').value.trim();
             
-            if (!groupJid || !targetJid) {
-                alert('لطفاً گروه و شخص تأییدکننده را انتخاب کنید');
+            if (!groupJid) {
+                alert('لطفاً گروه را انتخاب کنید');
                 return;
             }
+            
+            if (!targetNumber) {
+                alert('لطفاً شماره صاحب کارت را وارد کنید');
+                return;
+            }
+            
+            const targetJid = targetNumber.includes('@c.us') ? targetNumber : `${targetNumber}@c.us`;
             
             const res = await fetch('/save-check-config', {
                 method: 'POST',
@@ -864,4 +856,4 @@
         }
     </script>
 </body>
-                    </html>
+    </html>
