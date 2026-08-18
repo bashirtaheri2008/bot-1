@@ -247,7 +247,7 @@
     <div class="main-card" id="connectPage">
         <div class="header-icon">💬</div>
         <h1>اتصال به واتساپ</h1>
-        <p class="subtitle">ربات خود را متصل کنید</p>
+        <p class="subtitle">برای شروع، یکی از روش‌های زیر را انتخاب کنید</p>
         
         <div class="status-text" id="statusText"></div>
         
@@ -307,26 +307,33 @@
     <script>
         const socket = io();
         
+        // بررسی وضعیت - فقط اگه متصله داشبورد رو نشون بده
         fetch('/status')
             .then(r => r.json())
             .then(data => {
                 if (data.status === 'connected') {
                     showDashboard();
-                } else if (data.qr) {
-                    showQR(data.qr);
                 }
             });
         
-        socket.on('qr', (data) => showQR(data.qr));
+        // QR فقط وقتی کاربر دکمه رو زده باشه
+        socket.on('qr', (data) => {
+            if (document.getElementById('qrBox').style.display === 'block') {
+                showQR(data.qr);
+            }
+        });
+        
         socket.on('status', (data) => {
             if (data.status === 'connected') showDashboard();
         });
+        
         socket.on('pairing-code', (data) => {
             document.getElementById('pairingBox').style.display = 'block';
             document.getElementById('pairingCode').textContent = data.code;
             document.getElementById('statusText').style.display = 'block';
             document.getElementById('statusText').textContent = 'کد را در واتساپ وارد کنید';
         });
+        
         socket.on('incoming-message', (data) => {
             const log = document.getElementById('messagesLog');
             if (log.querySelector('p[style]')) log.innerHTML = '';
@@ -341,9 +348,6 @@
         });
         
         function showQR(qr) {
-            document.getElementById('connectPage').style.display = 'block';
-            document.getElementById('dashboard').style.display = 'none';
-            document.getElementById('qrBox').style.display = 'block';
             document.getElementById('qrContainer').innerHTML = `<img src="${qr}">`;
         }
         
@@ -355,6 +359,8 @@
         function connect() {
             document.getElementById('statusText').style.display = 'block';
             document.getElementById('statusText').textContent = 'در حال اتصال...';
+            document.getElementById('qrBox').style.display = 'block';
+            document.getElementById('qrContainer').innerHTML = '<p style="color: #6c757d;">در حال دریافت QR...</p>';
             fetch('/connect', { method: 'POST' });
         }
         
@@ -398,4 +404,4 @@
         }
     </script>
 </body>
-                </html>
+</html>
