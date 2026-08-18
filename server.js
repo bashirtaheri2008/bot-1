@@ -19,29 +19,23 @@ let sock = null;
 let connectionStatus = 'disconnected';
 let latestQR = null;
 
-// 📦 GitHub Config - اینها رو خودت جایگزین کن!
-const GITHUB_TOKEN = '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';
+// 📦 GitHub Config
+const GITHUB_TOKEN = 'YOUR_GITHUB_TOKEN';
 const GITHUB_REPO = 'bashirtaheri2008/bot-1';
 const GITHUB_FILE = 'session-data.json';
 
-// 💾 ذخیره session در GitHub
+// توابع GitHub (همون قبلی)
 async function saveSessionToGitHub() {
     try {
         const files = fs.readdirSync('auth_session');
         const sessionData = {};
-        
         for (const file of files) {
             sessionData[file] = fs.readFileSync(`auth_session/${file}`, 'utf8');
         }
-        
         const content = Buffer.from(JSON.stringify(sessionData)).toString('base64');
         
-        // اول ببین فایل وجود داره؟
         const checkResponse = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`, {
-            headers: {
-                'Authorization': `token ${GITHUB_TOKEN}`,
-                'Accept': 'application/vnd.github.v3+json'
-            }
+            headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
         });
         
         let sha = null;
@@ -50,17 +44,10 @@ async function saveSessionToGitHub() {
             sha = data.sha;
         }
         
-        // ذخیره فایل
-        const body = {
-            message: 'save session',
-            content: content
-        };
+        const body = { message: 'save session', content: content };
+        if (sha) body.sha = sha;
         
-        if (sha) {
-            body.sha = sha;
-        }
-        
-        const saveResponse = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`, {
+        await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`, {
             method: 'PUT',
             headers: {
                 'Authorization': `token ${GITHUB_TOKEN}`,
@@ -69,28 +56,17 @@ async function saveSessionToGitHub() {
             },
             body: JSON.stringify(body)
         });
-        
-        if (saveResponse.ok) {
-            console.log('✅ Session در GitHub ذخیره شد');
-        }
     } catch (error) {
         console.error('خطا در ذخیره:', error.message);
     }
 }
 
-// 📂 خواندن session از GitHub
 async function loadSessionFromGitHub() {
     try {
         const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`, {
-            headers: {
-                'Authorization': `token ${GITHUB_TOKEN}`,
-                'Accept': 'application/vnd.github.v3+json'
-            }
+            headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
         });
-        
-        if (!response.ok) {
-            return false;
-        }
+        if (!response.ok) return false;
         
         const data = await response.json();
         const content = Buffer.from(data.content, 'base64').toString('utf8');
@@ -98,22 +74,17 @@ async function loadSessionFromGitHub() {
         
         if (sessionData && Object.keys(sessionData).length > 0) {
             fs.mkdirSync('auth_session', { recursive: true });
-            
             for (const [file, content] of Object.entries(sessionData)) {
                 fs.writeFileSync(`auth_session/${file}`, content);
             }
-            
-            console.log('✅ Session از GitHub بارگذاری شد');
             return true;
         }
         return false;
     } catch (error) {
-        console.error('خطا در خواندن:', error.message);
         return false;
     }
 }
 
-// ذخیره خودکار هر ۵ دقیقه
 setInterval(saveSessionToGitHub, 300000);
 
 app.get('/', (req, res) => {
@@ -129,7 +100,33 @@ app.post('/connect', async (req, res) => {
         return res.json({ success: false, message: 'ربات در حال اجراست' });
     }
     await startBot();
-    res.json({ success: true, message: 'در حال اتصال...' });
+    res.json({ success: true });
+});
+
+// 📱 اتصال با شماره موبایل
+app.post('/connect-phone', async (req, res) => {
+    const { phone } = req.body;
+    
+    if (!phone) {
+        return res.json({ success: false, message: 'شماره را وارد کنید' });
+    }
+    
+    try {
+        if (!sock) {
+            await startBot();
+            await new Promise(resolve => setTimeout(resolve, 3000));
+        }
+        
+        if (sock) {
+            const code = await sock.requestPairingCode(phone);
+            io.emit('pairing-code', { code });
+            res.json({ success: true, code });
+        } else {
+            res.json({ success: false, message: 'ربات آماده نیست' });
+        }
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
 });
 
 app.post('/send-message', async (req, res) => {
@@ -142,7 +139,7 @@ app.post('/send-message', async (req, res) => {
     try {
         const jid = number.includes('@c.us') ? number : `${number}@c.us`;
         await sock.sendMessage(jid, { text: message });
-        res.json({ success: true, message: 'پیام ارسال شد' });
+        res.json({ success: true });
     } catch (error) {
         res.json({ success: false, message: error.message });
     }
@@ -163,10 +160,8 @@ async function startBot() {
     if (sock) return;
     
     try {
-        // اول session رو از GitHub بخون
         await loadSessionFromGitHub();
         
-        console.log('🚀 شروع ربات...');
         const { state, saveCreds } = await useMultiFileAuthState('auth_session');
         
         sock = makeWASocket({
@@ -190,15 +185,11 @@ async function startBot() {
                 connectionStatus = 'connected';
                 latestQR = null;
                 io.emit('status', { status: 'connected' });
-                console.log('✅ ربات وصل شد!');
-                
-                // ذخیره فوری
                 setTimeout(saveSessionToGitHub, 5000);
             }
             
             if (connection === 'close') {
                 const statusCode = lastDisconnect?.error?.output?.statusCode;
-                
                 connectionStatus = 'disconnected';
                 latestQR = null;
                 io.emit('status', { status: 'disconnected' });
