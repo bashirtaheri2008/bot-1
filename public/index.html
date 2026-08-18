@@ -243,7 +243,6 @@
     </style>
 </head>
 <body>
-    <!-- صفحه اتصال -->
     <div class="main-card" id="connectPage">
         <div class="header-icon">💬</div>
         <h1>اتصال به واتساپ</h1>
@@ -275,7 +274,6 @@
         </div>
     </div>
     
-    <!-- داشبورد -->
     <div class="dashboard" id="dashboard">
         <div class="dash-header">
             <h1>🤖 داشبورد ربات</h1>
@@ -285,7 +283,7 @@
         <div class="grid">
             <div class="card">
                 <h2>📤 ارسال پیام</h2>
-                <input type="text" class="input" id="number" placeholder="شماره مقصد (93xxxxxxxxx)" dir="ltr">
+                <input type="text" class="input" id="number" placeholder="93xxxxxxxxx" dir="ltr">
                 <textarea class="textarea" id="message" placeholder="متن پیام..."></textarea>
                 <button class="btn btn-primary" onclick="sendMessage()">ارسال</button>
             </div>
@@ -307,26 +305,29 @@
     <script>
         const socket = io();
         
-        // بررسی وضعیت - فقط اگه متصله داشبورد رو نشون بده
+        // بررسی وضعیت
         fetch('/status')
             .then(r => r.json())
             .then(data => {
                 if (data.status === 'connected') {
                     showDashboard();
                 }
-            });
+            })
+            .catch(err => console.log('خطا:', err));
         
-        // QR فقط وقتی کاربر دکمه رو زده باشه
+        // دریافت QR
         socket.on('qr', (data) => {
-            if (document.getElementById('qrBox').style.display === 'block') {
-                showQR(data.qr);
+            showQR(data.qr);
+        });
+        
+        // دریافت وضعیت
+        socket.on('status', (data) => {
+            if (data.status === 'connected') {
+                showDashboard();
             }
         });
         
-        socket.on('status', (data) => {
-            if (data.status === 'connected') showDashboard();
-        });
-        
+        // دریافت کد اتصال
         socket.on('pairing-code', (data) => {
             document.getElementById('pairingBox').style.display = 'block';
             document.getElementById('pairingCode').textContent = data.code;
@@ -334,21 +335,23 @@
             document.getElementById('statusText').textContent = 'کد را در واتساپ وارد کنید';
         });
         
+        // دریافت پیام
         socket.on('incoming-message', (data) => {
             const log = document.getElementById('messagesLog');
             if (log.querySelector('p[style]')) log.innerHTML = '';
             
             const div = document.createElement('div');
             div.className = 'msg';
-            div.innerHTML = `<span class="sender">${data.from}</span>
-                            <span class="time">${data.timestamp}</span>
-                            <br>${data.message}`;
+            div.innerHTML = '<span class="sender">' + data.from + '</span>' +
+                           '<span class="time">' + data.timestamp + '</span>' +
+                           '<br>' + data.message;
             log.appendChild(div);
             log.scrollTop = log.scrollHeight;
         });
         
         function showQR(qr) {
-            document.getElementById('qrContainer').innerHTML = `<img src="${qr}">`;
+            document.getElementById('qrBox').style.display = 'block';
+            document.getElementById('qrContainer').innerHTML = '<img src="' + qr + '">';
         }
         
         function showDashboard() {
@@ -361,45 +364,63 @@
             document.getElementById('statusText').textContent = 'در حال اتصال...';
             document.getElementById('qrBox').style.display = 'block';
             document.getElementById('qrContainer').innerHTML = '<p style="color: #6c757d;">در حال دریافت QR...</p>';
-            fetch('/connect', { method: 'POST' });
+            
+            fetch('/connect', { method: 'POST' })
+                .then(r => r.json())
+                .then(data => console.log(data))
+                .catch(err => console.log('خطا:', err));
         }
         
         function connectWithPhone() {
             const phone = document.getElementById('phoneNumber').value;
-            if (!phone) return alert('شماره را وارد کنید');
+            if (!phone) {
+                alert('شماره را وارد کنید');
+                return;
+            }
             
             fetch('/connect-phone', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone })
+                body: JSON.stringify({ phone: phone })
             })
             .then(r => r.json())
             .then(data => {
-                if (!data.success) alert('خطا: ' + data.message);
-            });
+                if (!data.success) {
+                    alert('خطا: ' + data.message);
+                }
+            })
+            .catch(err => alert('خطا: ' + err.message));
         }
         
         function sendMessage() {
             const number = document.getElementById('number').value;
             const message = document.getElementById('message').value;
-            if (!number || !message) return alert('شماره و پیام را وارد کنید');
+            
+            if (!number || !message) {
+                alert('شماره و پیام را وارد کنید');
+                return;
+            }
             
             fetch('/send-message', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ number, message })
+                body: JSON.stringify({ number: number, message: message })
             })
             .then(r => r.json())
             .then(data => {
                 alert(data.success ? '✅ ارسال شد' : '❌ ' + data.message);
-                if (data.success) document.getElementById('message').value = '';
-            });
+                if (data.success) {
+                    document.getElementById('message').value = '';
+                }
+            })
+            .catch(err => alert('خطا: ' + err.message));
         }
         
         function disconnect() {
             if (confirm('قطع اتصال؟')) {
                 fetch('/disconnect', { method: 'POST' })
-                    .then(() => location.reload());
+                    .then(() => location.reload())
+                    .catch(err => alert('خطا: ' + err.message));
             }
         }
     </script>
