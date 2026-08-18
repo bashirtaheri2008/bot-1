@@ -2,55 +2,57 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ربات واتساپ</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html { font-size: 16px; }
         body {
             font-family: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
             background: linear-gradient(135deg, #075e54 0%, #0a6e62 40%, #128c7e 100%);
             min-height: 100vh;
+            min-height: 100dvh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 15px;
+            padding: 10px;
         }
 
         /* ===== صفحه اتصال ===== */
         .connect-card {
             background: white;
-            border-radius: 24px;
-            padding: 35px 30px;
-            box-shadow: 0 25px 70px rgba(0,0,0,0.35);
-            max-width: 440px;
+            border-radius: 20px;
+            padding: 25px 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 400px;
             width: 100%;
             text-align: center;
         }
         .whatsapp-icon {
-            font-size: 72px;
-            margin-bottom: 10px;
+            font-size: 60px;
+            margin-bottom: 8px;
             display: inline-block;
             animation: float 3s ease-in-out infinite;
         }
         @keyframes float {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
+            50% { transform: translateY(-6px); }
         }
         .connect-card h1 {
             color: #075e54;
-            margin-bottom: 6px;
-            font-size: 26px;
+            margin-bottom: 4px;
+            font-size: 22px;
         }
         .connect-card .subtitle {
             color: #888;
-            margin-bottom: 25px;
-            font-size: 14px;
+            margin-bottom: 20px;
+            font-size: 13px;
         }
         .status-text {
-            margin: 15px 0;
-            font-size: 14px;
+            margin: 12px 0;
+            font-size: 13px;
             font-weight: 500;
-            padding: 8px 16px;
+            padding: 6px 14px;
             border-radius: 20px;
             display: inline-block;
         }
@@ -61,147 +63,138 @@
             background: #25d366;
             color: white;
             border: none;
-            padding: 14px 35px;
+            padding: 13px 30px;
             border-radius: 50px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 15px;
             font-family: inherit;
             font-weight: bold;
-            transition: all 0.3s;
+            transition: all 0.25s;
             width: 100%;
-            margin: 8px 0;
+            margin: 6px 0;
         }
-        .btn:hover {
-            background: #1eb955;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(37, 211, 102, 0.35);
-        }
+        .btn:hover { background: #1eb955; transform: translateY(-1px); }
         .btn:active { transform: translateY(0); }
         .btn-secondary { background: #075e54; }
-        .btn-secondary:hover { background: #064a42; box-shadow: 0 8px 20px rgba(7,94,84,0.35); }
-        .btn-danger { background: #dc3545; }
-        .btn-danger:hover { background: #c82333; box-shadow: 0 8px 20px rgba(220,53,69,0.35); }
+        .btn-secondary:hover { background: #064a42; }
         .divider {
-            display: flex; align-items: center; margin: 25px 0; color: #ccc; font-size: 13px;
+            display: flex; align-items: center; margin: 20px 0; color: #ccc; font-size: 12px;
         }
         .divider::before, .divider::after {
             content: ''; flex: 1; height: 1px; background: #e0e0e0;
         }
-        .divider span { padding: 0 12px; }
-        .qr-container { margin: 15px 0; display: none; }
+        .divider span { padding: 0 10px; }
+        .qr-container { margin: 12px 0; display: none; }
         .qr-container img {
-            max-width: 260px; border: 3px solid #25d366; border-radius: 16px; padding: 12px; background: white;
+            max-width: 230px; width: 100%; border: 3px solid #25d366; border-radius: 14px; padding: 10px; background: white;
         }
-        .phone-row { display: flex; gap: 8px; margin-bottom: 6px; direction: ltr; }
+        .phone-row {
+            display: flex; gap: 6px; margin-bottom: 4px; direction: ltr;
+        }
         .phone-row select {
-            width: 125px; flex-shrink: 0; padding: 14px 8px; border: 2px solid #e0e0e0; border-radius: 12px;
-            font-size: 15px; font-family: inherit; cursor: pointer; background: white; color: #333; transition: border-color 0.3s;
+            width: 115px; flex-shrink: 0; padding: 12px 6px; border: 2px solid #e0e0e0; border-radius: 10px;
+            font-size: 14px; font-family: inherit; cursor: pointer; background: white; color: #333;
         }
         .phone-row select:focus { border-color: #25d366; outline: none; }
         .phone-row input {
-            flex: 1; padding: 14px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px;
-            font-family: inherit; text-align: center; transition: border-color 0.3s; letter-spacing: 1px;
+            flex: 1; min-width: 0; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px;
+            font-size: 15px; font-family: inherit; text-align: center; letter-spacing: 1px;
         }
         .phone-row input:focus { border-color: #25d366; outline: none; }
-        .hint { font-size: 12px; color: #999; margin-top: 4px; margin-bottom: 12px; }
+        .hint { font-size: 11px; color: #999; margin-top: 3px; margin-bottom: 10px; }
         .pairing-result {
-            margin-top: 18px; padding: 22px; background: linear-gradient(135deg, #f0f9f4, #e8f5e9);
-            border-radius: 16px; display: none; animation: slideIn 0.4s ease;
+            margin-top: 14px; padding: 18px; background: linear-gradient(135deg, #f0f9f4, #e8f5e9);
+            border-radius: 14px; display: none;
         }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .pairing-result.show { display: block; }
-        .pairing-result .label { font-weight: bold; color: #075e54; font-size: 14px; margin-bottom: 8px; }
+        .pairing-result .label { font-weight: bold; color: #075e54; font-size: 13px; margin-bottom: 6px; }
         .pairing-result .code {
-            color: #25d366; font-size: 38px; letter-spacing: 8px; font-weight: bold;
-            font-family: monospace; margin: 10px 0; text-shadow: 0 2px 4px rgba(37,211,102,0.2);
+            color: #25d366; font-size: 32px; letter-spacing: 6px; font-weight: bold;
+            font-family: monospace; margin: 8px 0;
         }
-        .pairing-result .help { color: #888; font-size: 12px; margin-top: 10px; line-height: 1.6; }
-        .loading { color: #25d366; font-size: 14px; margin-top: 15px; display: none; }
+        .pairing-result .help { color: #888; font-size: 11px; margin-top: 8px; line-height: 1.5; }
+        .loading { color: #25d366; font-size: 13px; margin-top: 12px; display: none; }
         .loading.show { display: block; }
-        .loading::after { content: '...'; animation: dots 1.5s steps(4) infinite; }
-        @keyframes dots { 0% {content:'';} 25% {content:'.';} 50% {content:'..';} 75% {content:'...';} }
 
-        /* ===== داشبورد / صفحه امکانات ===== */
+        /* ===== داشبورد ===== */
         .dashboard {
             display: none;
             width: 100%;
-            max-width: 900px;
-            animation: fadeIn 0.5s ease;
+            max-width: 600px;
         }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .dashboard.show { display: block; }
         .dash-header {
             background: white;
-            padding: 18px 22px;
-            border-radius: 16px;
-            margin-bottom: 18px;
+            padding: 14px 18px;
+            border-radius: 14px;
+            margin-bottom: 14px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 6px 25px rgba(0,0,0,0.2);
         }
-        .dash-header h1 { color: #075e54; font-size: 20px; }
+        .dash-header h1 { color: #075e54; font-size: 18px; }
         .dash-header .badge {
-            background: #25d366; color: white; padding: 8px 16px; border-radius: 20px;
-            font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 6px;
+            background: #25d366; color: white; padding: 6px 14px; border-radius: 20px;
+            font-size: 12px; font-weight: bold; white-space: nowrap;
         }
-        .dash-grid {
+        .feature-btns {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 18px;
+            gap: 10px;
+            margin-bottom: 14px;
         }
-        @media (max-width: 700px) { .dash-grid { grid-template-columns: 1fr; } }
+        .feature-btn {
+            background: white; border: none; border-radius: 14px; padding: 16px 10px;
+            cursor: pointer; text-align: center; font-family: inherit;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.12); transition: all 0.25s;
+        }
+        .feature-btn:hover, .feature-btn:active { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
+        .feature-btn .icon { font-size: 30px; margin-bottom: 6px; display: block; }
+        .feature-btn .title { font-size: 13px; font-weight: bold; color: #075e54; }
+        .feature-btn .desc { font-size: 11px; color: #999; margin-top: 2px; }
         .dash-card {
             background: white;
-            border-radius: 16px;
-            padding: 22px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            border-radius: 14px;
+            padding: 18px;
+            box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+            margin-bottom: 14px;
         }
         .dash-card h2 {
-            color: #075e54; font-size: 16px; margin-bottom: 14px;
-            display: flex; align-items: center; gap: 6px;
+            color: #075e54; font-size: 15px; margin-bottom: 12px;
         }
         .dash-card input, .dash-card textarea, .dash-card select {
-            width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e0e0e0;
-            border-radius: 10px; font-family: inherit; font-size: 14px; transition: border-color 0.3s;
+            width: 100%; padding: 11px; margin-bottom: 8px; border: 2px solid #e0e0e0;
+            border-radius: 10px; font-family: inherit; font-size: 14px;
         }
         .dash-card input:focus, .dash-card textarea:focus, .dash-card select:focus {
             border-color: #25d366; outline: none;
         }
-        .dash-card textarea { height: 70px; resize: vertical; }
+        .dash-card textarea { height: 65px; resize: vertical; }
         .dash-btn {
-            padding: 12px 25px; border: none; border-radius: 50px; cursor: pointer;
-            font-size: 15px; font-family: inherit; font-weight: bold; transition: all 0.3s;
-            background: #25d366; color: white;
+            padding: 11px 22px; border: none; border-radius: 50px; cursor: pointer;
+            font-size: 14px; font-family: inherit; font-weight: bold;
+            background: #25d366; color: white; width: 100%;
         }
-        .dash-btn:hover { background: #1eb955; transform: translateY(-1px); }
-        .dash-btn.danger { background: #dc3545; }
-        .dash-btn.danger:hover { background: #c82333; }
-        .dash-btn.full { width: 100%; }
+        .dash-btn:hover { background: #1eb955; }
         .msg-list {
-            max-height: 300px; overflow-y: auto; background: #f8f9fa; border-radius: 10px; padding: 10px;
+            max-height: 280px; overflow-y: auto; background: #f8f9fa; border-radius: 10px; padding: 8px;
         }
         .msg-item {
-            background: white; padding: 10px 12px; margin-bottom: 8px; border-radius: 10px;
+            background: white; padding: 9px 11px; margin-bottom: 6px; border-radius: 10px;
             border-right: 3px solid #25d366;
         }
-        .msg-item .sender { font-weight: bold; color: #075e54; font-size: 13px; }
-        .msg-item .time { font-size: 11px; color: #999; float: left; }
-        .msg-item .text { margin-top: 4px; font-size: 13px; color: #333; }
-        .msg-empty { color: #999; font-size: 13px; text-align: center; padding: 20px; }
-        .feature-btns {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px;
-        }
-        .feature-btn {
-            background: white; border: none; border-radius: 14px; padding: 20px 15px;
-            cursor: pointer; text-align: center; font-family: inherit;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.15); transition: all 0.3s;
-        }
-        .feature-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
-        .feature-btn .icon { font-size: 36px; margin-bottom: 8px; display: block; }
-        .feature-btn .title { font-size: 14px; font-weight: bold; color: #075e54; }
-        .feature-btn .desc { font-size: 12px; color: #999; margin-top: 3px; }
+        .msg-item .sender { font-weight: bold; color: #075e54; font-size: 12px; }
+        .msg-item .time { font-size: 10px; color: #999; float: left; }
+        .msg-item .text { margin-top: 3px; font-size: 13px; color: #333; word-wrap: break-word; }
+        .msg-empty { color: #999; font-size: 12px; text-align: center; padding: 15px; }
         .hidden { display: none !important; }
+
+        @media (max-width: 380px) {
+            .feature-btns { grid-template-columns: 1fr; }
+            .phone-row { flex-direction: column; }
+            .phone-row select { width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -215,7 +208,7 @@
     <div id="statusText" class="status-text disconnected">در حال بررسی وضعیت...</div>
 
     <div class="qr-container" id="qrContainer">
-        <p style="margin-bottom:12px;color:#075e54;font-weight:bold;font-size:14px;">📱 QR را با واتساپ اسکن کنید</p>
+        <p style="margin-bottom:10px;color:#075e54;font-weight:bold;font-size:13px;">📱 QR را با واتساپ اسکن کنید</p>
         <img id="qrImage" src="">
     </div>
 
@@ -223,7 +216,7 @@
 
     <div class="divider"><span>یا</span></div>
 
-    <h3 style="color:#075e54;font-size:15px;margin-bottom:12px;">📱 اتصال با شماره موبایل</h3>
+    <h3 style="color:#075e54;font-size:14px;margin-bottom:10px;">📱 اتصال با شماره موبایل</h3>
     <div class="phone-row">
         <select id="countryCode">
             <option value="93" selected>🇦🇫 +93</option>
@@ -254,7 +247,7 @@
     </div>
 </div>
 
-<!-- ===== صفحه امکانات / داشبورد ===== -->
+<!-- ===== صفحه امکانات ===== -->
 <div class="dashboard" id="dashboard">
     <div class="dash-header">
         <h1>🤖 ربات واتساپ</h1>
@@ -265,65 +258,60 @@
         <button class="feature-btn" onclick="showSection('send')">
             <span class="icon">📤</span>
             <span class="title">ارسال پیام</span>
-            <span class="desc">ارسال پیام به شماره</span>
+            <span class="desc">ارسال به شماره</span>
         </button>
         <button class="feature-btn" onclick="showSection('inbox')">
             <span class="icon">📥</span>
             <span class="title">پیام‌های دریافتی</span>
-            <span class="desc">مشاهده پیام‌های جدید</span>
+            <span class="desc">مشاهده پیام‌ها</span>
         </button>
         <button class="feature-btn" onclick="showSection('auto')">
             <span class="icon">🤖</span>
             <span class="title">پاسخ خودکار</span>
-            <span class="desc">تنظیم پاسخ خودکار</span>
+            <span class="desc">تنظیم پاسخ</span>
         </button>
         <button class="feature-btn" onclick="disconnect()" style="background:#fff0f0;">
             <span class="icon">🔌</span>
             <span class="title" style="color:#dc3545;">قطع اتصال</span>
-            <span class="desc">خروج از واتساپ</span>
+            <span class="desc">خروج</span>
         </button>
     </div>
 
-    <div class="dash-grid">
-        <!-- ارسال پیام -->
-        <div class="dash-card hidden" id="section-send">
-            <h2>📤 ارسال پیام</h2>
-            <div class="phone-row" style="margin-bottom:10px;">
-                <select id="sendCountryCode" style="margin-bottom:0;">
-                    <option value="93" selected>🇦🇫 +93</option>
-                    <option value="98">🇮🇷 +98</option>
-                    <option value="1">🇺🇸 +1</option>
-                    <option value="44">🇬🇧 +44</option>
-                    <option value="49">🇩🇪 +49</option>
-                    <option value="971">🇦🇪 +971</option>
-                    <option value="966">🇸🇦 +966</option>
-                    <option value="90">🇹🇷 +90</option>
-                    <option value="7">🇷🇺 +7</option>
-                    <option value="92">🇵🇰 +92</option>
-                    <option value="880">🇧🇩 +880</option>
-                    <option value="91">🇮🇳 +91</option>
-                </select>
-                <input type="tel" id="sendNumber" placeholder="7×××××××" dir="ltr" inputmode="numeric" style="margin-bottom:0;">
-            </div>
-            <textarea id="sendMessage" placeholder="متن پیام"></textarea>
-            <button class="dash-btn full" onclick="sendMessage()">📨 ارسال</button>
+    <div id="section-send" class="dash-card hidden">
+        <h2>📤 ارسال پیام</h2>
+        <div class="phone-row" style="margin-bottom:8px;">
+            <select id="sendCountryCode" style="margin-bottom:0;">
+                <option value="93" selected>🇦🇫 +93</option>
+                <option value="98">🇮🇷 +98</option>
+                <option value="1">🇺🇸 +1</option>
+                <option value="44">🇬🇧 +44</option>
+                <option value="49">🇩🇪 +49</option>
+                <option value="971">🇦🇪 +971</option>
+                <option value="966">🇸🇦 +966</option>
+                <option value="90">🇹🇷 +90</option>
+                <option value="7">🇷🇺 +7</option>
+                <option value="92">🇵🇰 +92</option>
+                <option value="880">🇧🇩 +880</option>
+                <option value="91">🇮🇳 +91</option>
+            </select>
+            <input type="tel" id="sendNumber" placeholder="7×××××××" dir="ltr" inputmode="numeric" style="margin-bottom:0;">
         </div>
+        <textarea id="sendMessage" placeholder="متن پیام"></textarea>
+        <button class="dash-btn" onclick="sendMessage()">📨 ارسال</button>
+    </div>
 
-        <!-- پیام‌های دریافتی -->
-        <div class="dash-card hidden" id="section-inbox">
-            <h2>📥 پیام‌های دریافتی</h2>
-            <div class="msg-list" id="messagesList">
-                <div class="msg-empty">پیامی دریافت نشده</div>
-            </div>
+    <div id="section-inbox" class="dash-card hidden">
+        <h2>📥 پیام‌های دریافتی</h2>
+        <div class="msg-list" id="messagesList">
+            <div class="msg-empty">پیامی دریافت نشده</div>
         </div>
+    </div>
 
-        <!-- پاسخ خودکار -->
-        <div class="dash-card hidden" id="section-auto">
-            <h2>🤖 پاسخ خودکار</h2>
-            <p style="font-size:13px;color:#666;margin-bottom:12px;">پیام خودکار برای پاسخ به پیام‌های دریافتی:</p>
-            <textarea id="autoReplyText" placeholder="مثلا: سلام! امروز نمی‌تونم جواب بدم"></textarea>
-            <button class="dash-btn full" onclick="saveAutoReply()">💾 ذخیره</button>
-        </div>
+    <div id="section-auto" class="dash-card hidden">
+        <h2>🤖 پاسخ خودکار</h2>
+        <p style="font-size:12px;color:#666;margin-bottom:10px;">پیام خودکار برای پاسخ به پیام‌های دریافتی:</p>
+        <textarea id="autoReplyText" placeholder="مثلا: سلام! امروز نمی‌تونم جواب بدم"></textarea>
+        <button class="dash-btn" onclick="saveAutoReply()">💾 ذخیره</button>
     </div>
 </div>
 
@@ -372,7 +360,6 @@
         document.getElementById('qrContainer').style.display = 'block';
         document.getElementById('qrImage').src = qrData;
     }
-
     function showDashboard() {
         document.getElementById('connectPage').classList.add('hidden');
         document.getElementById('dashboard').classList.add('show');
@@ -381,7 +368,6 @@
         document.getElementById('dashboard').classList.remove('show');
         document.getElementById('connectPage').classList.remove('hidden');
     }
-
     function showSection(name) {
         document.querySelectorAll('[id^="section-"]').forEach(el => el.classList.add('hidden'));
         const el = document.getElementById('section-' + name);
@@ -389,7 +375,6 @@
     }
 
     async function connect() { await fetch('/connect', { method: 'POST' }); }
-
     async function connectWithPhone() {
         const cc = document.getElementById('countryCode').value;
         const num = document.getElementById('phoneNumber').value.trim().replace(/[^0-9]/g, '');
@@ -406,7 +391,6 @@
             alert(data.message || 'خطا');
         }
     }
-
     async function sendMessage() {
         const cc = document.getElementById('sendCountryCode').value;
         const num = document.getElementById('sendNumber').value.trim().replace(/[^0-9]/g, '');
@@ -420,15 +404,12 @@
         if (data.success) { document.getElementById('sendMessage').value = ''; alert('ارسال شد ✓'); }
         else alert(data.message || 'خطا');
     }
-
     async function disconnect() {
         if (!confirm('مطمئنی؟')) return;
         await fetch('/disconnect', { method: 'POST' });
         location.reload();
     }
-
     function saveAutoReply() {
-        const text = document.getElementById('autoReplyText').value;
         alert('ذخیره شد ✓');
     }
 </script>
