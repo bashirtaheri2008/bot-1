@@ -19,12 +19,39 @@ let sock = null;
 let connectionStatus = 'disconnected';
 let latestQR = null;
 
+// 🔐 PIN Configuration
+const PIN_FILE = 'pin.json';
+const DEFAULT_PIN = '1234'; // پین پیش‌فرض
+
+// خواندن PIN
+function getPIN() {
+    try {
+        if (fs.existsSync(PIN_FILE)) {
+            const data = JSON.parse(fs.readFileSync(PIN_FILE, 'utf8'));
+            return data.pin || DEFAULT_PIN;
+        }
+    } catch (error) {
+        console.error('خطا در خواندن PIN:', error);
+    }
+    return DEFAULT_PIN;
+}
+
+// ذخیره PIN
+function savePIN(newPin) {
+    try {
+        fs.writeFileSync(PIN_FILE, JSON.stringify({ pin: newPin }));
+        return true;
+    } catch (error) {
+        console.error('خطا در ذخیره PIN:', error);
+        return false;
+    }
+}
+
 // 📦 GitHub Config
-const GITHUB_TOKEN = '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';
+const GITHUB_TOKEN = 'YOUR_GITHUB_TOKEN';
 const GITHUB_REPO = 'bashirtaheri2008/bot-1';
 const GITHUB_FILE = 'session-data.json';
 
-// توابع GitHub (همون قبلی)
 async function saveSessionToGitHub() {
     try {
         const files = fs.readdirSync('auth_session');
@@ -87,8 +114,41 @@ async function loadSessionFromGitHub() {
 
 setInterval(saveSessionToGitHub, 300000);
 
+// 📱 Routes
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// 🔐 بررسی PIN
+app.post('/verify-pin', (req, res) => {
+    const { pin } = req.body;
+    const currentPin = getPIN();
+    
+    if (pin === currentPin) {
+        res.json({ success: true });
+    } else {
+        res.json({ success: false, message: 'PIN اشتباه است' });
+    }
+});
+
+// 🔐 تغییر PIN
+app.post('/change-pin', (req, res) => {
+    const { oldPin, newPin } = req.body;
+    const currentPin = getPIN();
+    
+    if (oldPin !== currentPin) {
+        return res.json({ success: false, message: 'PIN فعلی اشتباه است' });
+    }
+    
+    if (!newPin || newPin.length < 4) {
+        return res.json({ success: false, message: 'PIN جدید باید حداقل ۴ رقم باشد' });
+    }
+    
+    if (savePIN(newPin)) {
+        res.json({ success: true, message: 'PIN تغییر کرد' });
+    } else {
+        res.json({ success: false, message: 'خطا در ذخیره PIN' });
+    }
 });
 
 app.get('/status', (req, res) => {
@@ -103,7 +163,6 @@ app.post('/connect', async (req, res) => {
     res.json({ success: true });
 });
 
-// 📱 اتصال با شماره موبایل
 app.post('/connect-phone', async (req, res) => {
     const { phone } = req.body;
     
