@@ -19,30 +19,45 @@ let sock = null;
 let connectionStatus = 'disconnected';
 let latestQR = null;
 
-// 🔐 PIN Configuration
+// 🔐 PIN
 const PIN_FILE = 'pin.json';
-const DEFAULT_PIN = '1234'; // پین پیش‌فرض
+const DEFAULT_PIN = '1234';
 
-// خواندن PIN
 function getPIN() {
     try {
         if (fs.existsSync(PIN_FILE)) {
-            const data = JSON.parse(fs.readFileSync(PIN_FILE, 'utf8'));
-            return data.pin || DEFAULT_PIN;
+            return JSON.parse(fs.readFileSync(PIN_FILE, 'utf8')).pin || DEFAULT_PIN;
         }
-    } catch (error) {
-        console.error('خطا در خواندن PIN:', error);
-    }
+    } catch (error) {}
     return DEFAULT_PIN;
 }
 
-// ذخیره PIN
 function savePIN(newPin) {
     try {
         fs.writeFileSync(PIN_FILE, JSON.stringify({ pin: newPin }));
         return true;
     } catch (error) {
-        console.error('خطا در ذخیره PIN:', error);
+        return false;
+    }
+}
+
+// 🤖 پاسخ خودکار
+const AUTO_REPLY_FILE = 'auto-replies.json';
+
+function getAutoReplies() {
+    try {
+        if (fs.existsSync(AUTO_REPLY_FILE)) {
+            return JSON.parse(fs.readFileSync(AUTO_REPLY_FILE, 'utf8'));
+        }
+    } catch (error) {}
+    return [];
+}
+
+function saveAutoReplies(replies) {
+    try {
+        fs.writeFileSync(AUTO_REPLY_FILE, JSON.stringify(replies, null, 2));
+        return true;
+    } catch (error) {
         return false;
     }
 }
@@ -67,8 +82,7 @@ async function saveSessionToGitHub() {
         
         let sha = null;
         if (checkResponse.ok) {
-            const data = await checkResponse.json();
-            sha = data.sha;
+            sha = (await checkResponse.json()).sha;
         }
         
         const body = { message: 'save session', content: content };
@@ -119,36 +133,57 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// 🔐 بررسی PIN
+// 🔐 PIN Routes
 app.post('/verify-pin', (req, res) => {
     const { pin } = req.body;
-    const currentPin = getPIN();
-    
-    if (pin === currentPin) {
+    if (pin === getPIN()) {
         res.json({ success: true });
     } else {
         res.json({ success: false, message: 'PIN اشتباه است' });
     }
 });
 
-// 🔐 تغییر PIN
 app.post('/change-pin', (req, res) => {
     const { oldPin, newPin } = req.body;
-    const currentPin = getPIN();
     
-    if (oldPin !== currentPin) {
+    if (oldPin !== getPIN()) {
         return res.json({ success: false, message: 'PIN فعلی اشتباه است' });
     }
-    
     if (!newPin || newPin.length < 4) {
         return res.json({ success: false, message: 'PIN جدید باید حداقل ۴ رقم باشد' });
     }
     
     if (savePIN(newPin)) {
-        res.json({ success: true, message: 'PIN تغییر کرد' });
+        res.json({ success: true });
     } else {
-        res.json({ success: false, message: 'خطا در ذخیره PIN' });
+        res.json({ success: false, message: 'خطا در ذخیره' });
     }
+});
+
+// 🤖 Auto Reply Routes
+app.post('/add-auto-reply', (req, res) => {
+    const { keyword, response } = req.body;
+    
+    if (!keyword || !response) {
+        return res.json({ success: false, message: 'کلمه کلیدی و پاسخ را وارد کنید' });
+    }
+    
+    const replies = getAutoReplies();
+    replies.push({ keyword: keyword.toLowerCase(), response });
+    saveAutoReplies(replies);
+    
+    res.json({ success: true });
+});
+
+app.get('/get-auto-replies', (req, res) => {
+    res.json({ replies: getAutoReplies() });
+});
+
+app.post('/delete-auto-reply', (req, res) => {
+    const { keyword } = req.body;
+    const replies = getAutoReplies().filter(r => r.keyword !== keyword.toLowerCase());
+    saveAutoReplies(replies);
+    res.json({ success: true });
 });
 
 app.get('/status', (req, res) => {
@@ -284,8 +319,13 @@ async function startBot() {
                     timestamp: new Date().toLocaleTimeString('fa-IR')
                 });
                 
-                if (text.toLowerCase() === 'سلام') {
-                    await sock.sendMessage(from, { text: 'سلام! 👋 چطور می‌تونم کمکت کنم؟' });
+                // 🤖 بررسی پاسخ خودکار
+                const replies = getAutoReplies();
+                const match = replies.find(r => text.toLowerCase().includes(r.keyword));
+                
+                if (match) {
+                    await sock.sendMessage(from, { text: match.response });
+                    io.emit('auto-reply-sent', { keyword: match.keyword });
                 }
             }
         });
