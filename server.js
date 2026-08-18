@@ -4,7 +4,7 @@ const socketIO = require('socket.io');
 const path = require('path');
 const fs = require('fs');
 const makeWASocket = require('@whiskeysockets/baileys').default;
-const { useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
+const { useMultiFileAuthState, DisconnectReason, downloadMediaMessage } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const qrcode = require('qrcode');
 
@@ -19,7 +19,7 @@ let sock = null;
 let connectionStatus = 'disconnected';
 let latestQR = null;
 
-// 🔐 PIN Configuration
+// 🔐 PIN
 const PIN_FILE = 'pin.json';
 const DEFAULT_PIN = '1234';
 
@@ -36,72 +36,43 @@ function savePIN(newPin) {
     try {
         fs.writeFileSync(PIN_FILE, JSON.stringify({ pin: newPin }));
         return true;
-    } catch (error) {
-        return false;
-    }
+    } catch (error) { return false; }
 }
 
 // 🤖 پاسخ خودکار
 const AUTO_REPLY_FILE = 'auto-replies.json';
-
 function getAutoReplies() {
-    try {
-        if (fs.existsSync(AUTO_REPLY_FILE)) {
-            return JSON.parse(fs.readFileSync(AUTO_REPLY_FILE, 'utf8'));
-        }
-    } catch (error) {}
+    try { if (fs.existsSync(AUTO_REPLY_FILE)) return JSON.parse(fs.readFileSync(AUTO_REPLY_FILE, 'utf8')); } catch (e) {}
     return [];
 }
-
 function saveAutoReplies(replies) {
-    try {
-        fs.writeFileSync(AUTO_REPLY_FILE, JSON.stringify(replies, null, 2));
-        return true;
-    } catch (error) {
-        return false;
-    }
-}
-
-// 💱 صرافی
-const RATES_FILE = 'rates.json';
-
-function getRates() {
-    try {
-        if (fs.existsSync(RATES_FILE)) {
-            return JSON.parse(fs.readFileSync(RATES_FILE, 'utf8'));
-        }
-    } catch (error) {}
-    return [];
-}
-
-function saveRates(rates) {
-    try {
-        fs.writeFileSync(RATES_FILE, JSON.stringify(rates, null, 2));
-        return true;
-    } catch (error) {
-        return false;
-    }
+    try { fs.writeFileSync(AUTO_REPLY_FILE, JSON.stringify(replies, null, 2)); return true; } catch (e) { return false; }
 }
 
 // 🛍️ فروشگاه
 const PRODUCTS_FILE = 'products.json';
-
 function getProducts() {
-    try {
-        if (fs.existsSync(PRODUCTS_FILE)) {
-            return JSON.parse(fs.readFileSync(PRODUCTS_FILE, 'utf8'));
-        }
-    } catch (error) {}
+    try { if (fs.existsSync(PRODUCTS_FILE)) return JSON.parse(fs.readFileSync(PRODUCTS_FILE, 'utf8')); } catch (e) {}
     return [];
 }
-
 function saveProducts(products) {
+    try { fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2)); return true; } catch (e) { return false; }
+}
+
+// 💱 چک فیش
+const CHECK_CONFIG_FILE = 'check-config.json';
+let checkConfig = { active: false, groupJid: '', targetJid: '' };
+let forwardedMap = {}; // originalKey -> forwardedKey
+
+function loadCheckConfig() {
     try {
-        fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2));
-        return true;
-    } catch (error) {
-        return false;
-    }
+        if (fs.existsSync(CHECK_CONFIG_FILE)) {
+            checkConfig = JSON.parse(fs.readFileSync(CHECK_CONFIG_FILE, 'utf8'));
+        }
+    } catch (e) {}
+}
+function saveCheckConfig() {
+    try { fs.writeFileSync(CHECK_CONFIG_FILE, JSON.stringify(checkConfig, null, 2)); } catch (e) {}
 }
 
 // 📦 GitHub Config
@@ -117,31 +88,19 @@ async function saveSessionToGitHub() {
             sessionData[file] = fs.readFileSync(`auth_session/${file}`, 'utf8');
         }
         const content = Buffer.from(JSON.stringify(sessionData)).toString('base64');
-        
         const checkResponse = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`, {
             headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
         });
-        
         let sha = null;
-        if (checkResponse.ok) {
-            sha = (await checkResponse.json()).sha;
-        }
-        
+        if (checkResponse.ok) sha = (await checkResponse.json()).sha;
         const body = { message: 'save session', content: content };
         if (sha) body.sha = sha;
-        
         await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`, {
             method: 'PUT',
-            headers: {
-                'Authorization': `token ${GITHUB_TOKEN}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
         });
-    } catch (error) {
-        console.error('خطا در ذخیره session:', error.message);
-    }
+    } catch (error) { console.error('خطا در ذخیره session:', error.message); }
 }
 
 async function loadSessionFromGitHub() {
@@ -150,11 +109,9 @@ async function loadSessionFromGitHub() {
             headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
         });
         if (!response.ok) return false;
-        
         const data = await response.json();
         const content = Buffer.from(data.content, 'base64').toString('utf8');
         const sessionData = JSON.parse(content);
-        
         if (sessionData && Object.keys(sessionData).length > 0) {
             fs.mkdirSync('auth_session', { recursive: true });
             for (const [file, content] of Object.entries(sessionData)) {
@@ -163,195 +120,143 @@ async function loadSessionFromGitHub() {
             return true;
         }
         return false;
-    } catch (error) {
-        return false;
-    }
+    } catch (error) { return false; }
 }
 
 setInterval(saveSessionToGitHub, 300000);
 
-// 📱 Main Routes
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+// 📱 Routes
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
-// 🔐 PIN Routes
+// 🔐 PIN
 app.post('/verify-pin', (req, res) => {
-    const { pin } = req.body;
-    if (pin === getPIN()) {
-        res.json({ success: true });
-    } else {
-        res.json({ success: false, message: 'PIN اشتباه است' });
-    }
+    if (req.body.pin === getPIN()) res.json({ success: true });
+    else res.json({ success: false, message: 'PIN اشتباه است' });
 });
-
 app.post('/change-pin', (req, res) => {
     const { oldPin, newPin } = req.body;
-    
-    if (oldPin !== getPIN()) {
-        return res.json({ success: false, message: 'PIN فعلی اشتباه است' });
-    }
-    if (!newPin || newPin.length < 4) {
-        return res.json({ success: false, message: 'PIN جدید باید حداقل ۴ رقم باشد' });
-    }
-    
-    if (savePIN(newPin)) {
-        res.json({ success: true, message: 'PIN تغییر کرد' });
-    } else {
-        res.json({ success: false, message: 'خطا در ذخیره PIN' });
-    }
+    if (oldPin !== getPIN()) return res.json({ success: false, message: 'PIN فعلی اشتباه است' });
+    if (!newPin || newPin.length < 4) return res.json({ success: false, message: 'PIN جدید باید حداقل ۴ رقم باشد' });
+    if (savePIN(newPin)) res.json({ success: true });
+    else res.json({ success: false, message: 'خطا' });
 });
 
-// 🤖 Auto Reply Routes
+// 🤖 Auto Reply
 app.post('/add-auto-reply', (req, res) => {
     const { keyword, response } = req.body;
-    
-    if (!keyword || !response) {
-        return res.json({ success: false, message: 'کلمه کلیدی و پاسخ را وارد کنید' });
-    }
-    
+    if (!keyword || !response) return res.json({ success: false });
     const replies = getAutoReplies();
     replies.push({ keyword: keyword.toLowerCase(), response });
     saveAutoReplies(replies);
-    
     res.json({ success: true });
 });
-
-app.get('/get-auto-replies', (req, res) => {
-    res.json({ replies: getAutoReplies() });
-});
-
+app.get('/get-auto-replies', (req, res) => res.json({ replies: getAutoReplies() }));
 app.post('/delete-auto-reply', (req, res) => {
-    const { keyword } = req.body;
-    const replies = getAutoReplies().filter(r => r.keyword !== keyword.toLowerCase());
+    const replies = getAutoReplies().filter(r => r.keyword !== req.body.keyword.toLowerCase());
     saveAutoReplies(replies);
     res.json({ success: true });
 });
 
-// 💱 Exchange Routes
-app.post('/add-rate', (req, res) => {
-    const { name, rate } = req.body;
-    
-    if (!name || !rate) {
-        return res.json({ success: false, message: 'نام ارز و نرخ را وارد کنید' });
-    }
-    
-    const rates = getRates();
-    rates.push({ name, rate });
-    saveRates(rates);
-    res.json({ success: true });
-});
-
-app.get('/get-rates', (req, res) => {
-    res.json({ rates: getRates() });
-});
-
-app.post('/delete-rate', (req, res) => {
-    const { name } = req.body;
-    const rates = getRates().filter(r => r.name !== name);
-    saveRates(rates);
-    res.json({ success: true });
-});
-
-// 🛍️ Shop Routes
+// 🛍️ Shop
 app.post('/add-product', (req, res) => {
     const { name, price, desc } = req.body;
-    
-    if (!name || !price) {
-        return res.json({ success: false, message: 'نام و قیمت محصول را وارد کنید' });
-    }
-    
+    if (!name || !price) return res.json({ success: false });
     const products = getProducts();
     products.push({ name, price, desc: desc || '' });
     saveProducts(products);
     res.json({ success: true });
 });
-
-app.get('/get-products', (req, res) => {
-    res.json({ products: getProducts() });
-});
-
+app.get('/get-products', (req, res) => res.json({ products: getProducts() }));
 app.post('/delete-product', (req, res) => {
-    const { name } = req.body;
-    const products = getProducts().filter(p => p.name !== name);
+    const products = getProducts().filter(p => p.name !== req.body.name);
     saveProducts(products);
     res.json({ success: true });
 });
 
-// 📊 Status Routes
-app.get('/status', (req, res) => {
-    res.json({ status: connectionStatus, qr: latestQR });
+// 💱 Check Receipt (چک فیش)
+app.get('/get-groups', async (req, res) => {
+    if (!sock) return res.json({ groups: [] });
+    try {
+        const groups = await sock.groupFetchAllParticipating();
+        const list = Object.entries(groups).map(([jid, info]) => ({
+            jid,
+            name: info.subject
+        }));
+        res.json({ groups: list });
+    } catch (e) {
+        res.json({ groups: [] });
+    }
 });
 
-app.post('/connect', async (req, res) => {
-    if (sock) {
-        return res.json({ success: false, message: 'ربات در حال اجراست' });
+app.get('/get-contacts', async (req, res) => {
+    if (!sock) return res.json({ contacts: [] });
+    try {
+        const store = sock.store;
+        const contacts = [];
+        for (const [jid, contact] of Object.entries(store.contacts || {})) {
+            if (jid.endsWith('@c.us') && contact.notify) {
+                contacts.push({ jid, name: contact.notify });
+            }
+        }
+        res.json({ contacts });
+    } catch (e) {
+        res.json({ contacts: [] });
     }
-    await startBot();
+});
+
+app.get('/get-check-config', (req, res) => res.json(checkConfig));
+app.post('/save-check-config', (req, res) => {
+    const { active, groupJid, targetJid } = req.body;
+    checkConfig = { active: !!active, groupJid: groupJid || '', targetJid: targetJid || '' };
+    saveCheckConfig();
     res.json({ success: true });
 });
 
+app.post('/toggle-check', (req, res) => {
+    checkConfig.active = !!req.body.active;
+    saveCheckConfig();
+    res.json({ success: true, active: checkConfig.active });
+});
+
+// 📊 Status & Connect
+app.get('/status', (req, res) => res.json({ status: connectionStatus, qr: latestQR }));
+app.post('/connect', async (req, res) => {
+    if (sock) return res.json({ success: false, message: 'ربات در حال اجراست' });
+    await startBot();
+    res.json({ success: true });
+});
 app.post('/connect-phone', async (req, res) => {
     const { phone } = req.body;
-    
-    if (!phone) {
-        return res.json({ success: false, message: 'شماره را وارد کنید' });
-    }
-    
+    if (!phone) return res.json({ success: false });
     try {
-        if (!sock) {
-            await startBot();
-            await new Promise(resolve => setTimeout(resolve, 3000));
-        }
-        
+        if (!sock) { await startBot(); await new Promise(r => setTimeout(r, 3000)); }
         if (sock) {
             const code = await sock.requestPairingCode(phone);
             io.emit('pairing-code', { code });
             res.json({ success: true, code });
-        } else {
-            res.json({ success: false, message: 'ربات آماده نیست' });
-        }
-    } catch (error) {
-        res.json({ success: false, message: error.message });
-    }
+        } else res.json({ success: false });
+    } catch (e) { res.json({ success: false, message: e.message }); }
 });
-
 app.post('/send-message', async (req, res) => {
     const { number, message } = req.body;
-    
-    if (!sock) {
-        return res.json({ success: false, message: 'ربات متصل نیست' });
-    }
-    
+    if (!sock) return res.json({ success: false });
     try {
         const jid = number.includes('@c.us') ? number : `${number}@c.us`;
         await sock.sendMessage(jid, { text: message });
         res.json({ success: true });
-    } catch (error) {
-        res.json({ success: false, message: error.message });
-    }
+    } catch (e) { res.json({ success: false, message: e.message }); }
 });
-
 app.post('/disconnect', async (req, res) => {
-    if (sock) {
-        await sock.logout();
-        sock = null;
-        connectionStatus = 'disconnected';
-        latestQR = null;
-        io.emit('status', { status: 'disconnected' });
-    }
+    if (sock) { await sock.logout(); sock = null; connectionStatus = 'disconnected'; latestQR = null; io.emit('status', { status: 'disconnected' }); }
     res.json({ success: true });
 });
 
-// 🤖 Start Bot
+// 🤖 شروع ربات
 async function startBot() {
     if (sock) return;
-    
     try {
         await loadSessionFromGitHub();
-        
         const { state, saveCreds } = await useMultiFileAuthState('auth_session');
-        
         sock = makeWASocket({
             auth: state,
             logger: pino({ level: 'silent' }),
@@ -360,7 +265,6 @@ async function startBot() {
 
         sock.ev.on('connection.update', async (update) => {
             const { connection, lastDisconnect, qr } = update;
-            
             if (qr) {
                 const qrImage = await qrcode.toDataURL(qr);
                 latestQR = qrImage;
@@ -368,28 +272,20 @@ async function startBot() {
                 connectionStatus = 'waiting_qr';
                 io.emit('status', { status: 'waiting_qr' });
             }
-            
             if (connection === 'open') {
                 connectionStatus = 'connected';
                 latestQR = null;
                 io.emit('status', { status: 'connected' });
                 setTimeout(saveSessionToGitHub, 5000);
             }
-            
             if (connection === 'close') {
                 const statusCode = lastDisconnect?.error?.output?.statusCode;
                 connectionStatus = 'disconnected';
                 latestQR = null;
                 io.emit('status', { status: 'disconnected' });
-                
                 if (statusCode !== DisconnectReason.loggedOut) {
-                    setTimeout(() => {
-                        sock = null;
-                        startBot();
-                    }, 5000);
-                } else {
-                    sock = null;
-                }
+                    setTimeout(() => { sock = null; startBot(); }, 5000);
+                } else sock = null;
             }
         });
 
@@ -398,51 +294,54 @@ async function startBot() {
         sock.ev.on('messages.upsert', async ({ messages, type }) => {
             const msg = messages[0];
             if (!msg.message || type !== 'notify') return;
-            
             const from = msg.key.remoteJid;
             const messageType = Object.keys(msg.message)[0];
-            
+
+            // 📥 پیام‌های متنی
             if (messageType === 'conversation' || messageType === 'extendedTextMessage') {
-                const text = messageType === 'conversation' 
-                    ? msg.message.conversation 
-                    : msg.message.extendedTextMessage.text;
-                
-                io.emit('incoming-message', {
-                    from,
-                    message: text,
-                    timestamp: new Date().toLocaleTimeString('fa-IR')
-                });
-                
-                // 🤖 بررسی پاسخ خودکار
+                const text = messageType === 'conversation' ? msg.message.conversation : msg.message.extendedTextMessage.text;
+                io.emit('incoming-message', { from, message: text, timestamp: new Date().toLocaleTimeString('fa-IR') });
+
                 const replies = getAutoReplies();
                 const match = replies.find(r => text.toLowerCase().includes(r.keyword));
-                
-                if (match) {
-                    await sock.sendMessage(from, { text: match.response });
-                }
-                
-                // 💱 بررسی نرخ ارز
-                if (text.toLowerCase().includes('نرخ') || text.toLowerCase().includes('قیمت')) {
-                    const rates = getRates();
-                    if (rates.length > 0) {
-                        let rateText = '💱 نرخ‌های فعلی:\n';
-                        rates.forEach(r => {
-                            rateText += `${r.name}: ${r.rate}\n`;
-                        });
-                        await sock.sendMessage(from, { text: rateText });
-                    }
-                }
-                
-                // 🛍️ بررسی محصولات
+                if (match) await sock.sendMessage(from, { text: match.response });
+
                 if (text.toLowerCase().includes('محصول') || text.toLowerCase().includes('کالا')) {
                     const products = getProducts();
-                    if (products.length > 0) {
-                        let productText = '🛍️ محصولات:\n';
-                        products.forEach(p => {
-                            productText += `📦 ${p.name}: ${p.price}${p.desc ? ' - ' + p.desc : ''}\n`;
-                        });
-                        await sock.sendMessage(from, { text: productText });
+                    if (products.length) {
+                        let txt = '🛍️ محصولات:\n';
+                        products.forEach(p => txt += `📦 ${p.name}: ${p.price}${p.desc ? ' - ' + p.desc : ''}\n`);
+                        await sock.sendMessage(from, { text: txt });
                     }
+                }
+            }
+
+            // 🖼️ دریافت عکس فیش
+            if (messageType === 'imageMessage' && checkConfig.active && from === checkConfig.groupJid) {
+                try {
+                    const buffer = await downloadMediaMessage(msg, 'buffer', {});
+                    const sent = await sock.sendMessage(checkConfig.targetJid, {
+                        image: buffer,
+                        caption: `📄 فیش جدید از گروه\nاز: ${from}\nلطفاً بررسی کنید و در صورت تأیید 👍 بزنید.`
+                    });
+                    // ذخیره نگاشت
+                    forwardedMap[sent.key.id] = msg.key;
+                } catch (e) { console.error('خطا در ارسال فیش:', e.message); }
+            }
+
+            // 👍 اعمال ریکشن
+            if (messageType === 'reaction') {
+                const reaction = msg.message.reaction;
+                const reactedKey = reaction.key;
+                // اگر این ریکشن روی پیام ارسالی ما به تأییدکننده باشد
+                if (forwardedMap[reactedKey.id] && (reaction.text === '👍' || reaction.text === '✅')) {
+                    const originalKey = forwardedMap[reactedKey.id];
+                    try {
+                        await sock.sendMessage(originalKey.remoteJid, {
+                            react: { text: reaction.text, key: originalKey }
+                        });
+                        delete forwardedMap[reactedKey.id];
+                    } catch (e) { console.error('خطا در اعمال ریکشن:', e.message); }
                 }
             }
         });
@@ -453,7 +352,10 @@ async function startBot() {
     }
 }
 
-// 🚀 Start
+// بارگذاری تنظیمات چک
+loadCheckConfig();
+
+// 🚀 شروع
 startBot();
 
 const PORT = process.env.PORT || 10000;
