@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>داشبورد ربات واتساپ</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header {
+            background: #075e54;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 24px; }
+        .status-badge {
+            background: #ff0000;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .status-badge.connected { background: #25d366; }
+        .status-badge.waiting { background: #ffa500; }
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .card h2 { color: #075e54; margin-bottom: 15px; font-size: 18px; }
+        .qr-container {
+            text-align: center;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .qr-container img {
+            max-width: 250px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 10px;
+        }
+        .btn {
+            background: #075e54;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-family: inherit;
+            transition: background 0.3s;
+        }
+        .btn:hover { background: #064a42; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        textarea { height: 80px; resize: vertical; }
+        .messages-log {
+            max-height: 400px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        .message-item {
+            background: white;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+            border-right: 3px solid #25d366;
+        }
+        .message-item .sender {
+            font-weight: bold;
+            color: #075e54;
+            font-size: 14px;
+        }
+        .message-item .time {
+            font-size: 12px;
+            color: #6c757d;
+            float: left;
+        }
+        .message-item .text { margin-top: 5px; font-size: 14px; }
+        @media (max-width: 768px) {
+            .main-content { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 داشبورد ربات واتساپ</h1>
+            <div class="status-badge" id="statusBadge">غیرفعال</div>
+        </div>
+        
+        <div class="main-content">
+            <div class="card">
+                <h2>📱 اتصال</h2>
+                <div class="qr-container" id="qrContainer">
+                    <p style="color: #6c757d;">برای اتصال روی دکمه کلیک کنید</p>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button class="btn" onclick="connect()">🔌 اتصال</button>
+                    <button class="btn btn-danger" onclick="disconnect()">❌ قطع اتصال</button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>📤 ارسال پیام</h2>
+                <input type="text" id="number" placeholder="شماره با کد کشور (مثلاً: 98912xxxxxxx)">
+                <textarea id="message" placeholder="متن پیام..."></textarea>
+                <button class="btn" onclick="sendMessage()">📨 ارسال</button>
+            </div>
+            
+            <div class="card" style="grid-column: 1 / -1;">
+                <h2>📋 پیام‌های دریافتی</h2>
+                <div class="messages-log" id="messagesLog">
+                    <p style="color: #6c757d;">پیامی دریافت نشده است</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        
+        socket.on('qr', (data) => {
+            document.getElementById('qrContainer').innerHTML = 
+                `<img src="${data.qr}" alt="QR Code">
+                 <p style="margin-top: 10px; color: #075e54;">📱 با واتساپ اسکن کنید</p>`;
+        });
+        
+        socket.on('status', (data) => {
+            const badge = document.getElementById('statusBadge');
+            badge.textContent = data.status === 'connected' ? 'متصل' : 
+                               data.status === 'waiting_qr' ? 'در انتظار اسکن' : 'غیرفعال';
+            badge.className = 'status-badge ' + data.status;
+            
+            if (data.status === 'connected') {
+                document.getElementById('qrContainer').innerHTML = 
+                    '<p style="color: #25d366; font-size: 20px;">✅ متصل شد!</p>';
+            }
+        });
+        
+        socket.on('incoming-message', (data) => {
+            const messagesLog = document.getElementById('messagesLog');
+            
+            if (messagesLog.querySelector('p[style]')) {
+                messagesLog.innerHTML = '';
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message-item';
+            messageDiv.innerHTML = `
+                <div class="sender">👤 ${data.from}</div>
+                <div class="time">${data.timestamp}</div>
+                <div class="text">${data.message}</div>
+            `;
+            
+            messagesLog.appendChild(messageDiv);
+            messagesLog.scrollTop = messagesLog.scrollHeight;
+        });
+        
+        function connect() {
+            fetch('/connect', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => console.log(data));
+        }
+        
+        function disconnect() {
+            fetch('/disconnect', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    document.getElementById('qrContainer').innerHTML = 
+                        '<p style="color: #6c757d;">اتصال قطع شد</p>';
+                });
+        }
+        
+        function sendMessage() {
+            const number = document.getElementById('number').value;
+            const message = document.getElementById('message').value;
+            
+            if (!number || !message) {
+                alert('شماره و متن پیام را وارد کنید');
+                return;
+            }
+            
+            fetch('/send-message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ number, message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.success ? '✅ پیام ارسال شد' : '❌ خطا: ' + data.message);
+                if (data.success) {
+                    document.getElementById('message').value = '';
+                }
+            });
+        }
+    </script>
+</body>
+      </html>
