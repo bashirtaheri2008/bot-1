@@ -4,876 +4,1232 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ربات واتساپ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Vazirmatn', sans-serif;
+        }
+
+        :root {
+            --primary: #004B1C;
+            --green: #25D366;
+            --green-dark: #1ebe57;
+            --green-light: #f1fcf5;
+            --text: #1e293b;
+            --text-light: #6c757d;
+            --white: #fff;
+            --radius: 12px;
+            --shadow: 0 4px 20px rgba(0,0,0,0.08);
+            --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            background: #f0f2f5;
-            min-height: 100vh;
+            background: var(--green-light);
+            color: var(--text);
+            line-height: 1.8;
+            font-size: 16px;
         }
-        
-        .pin-page {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 20px;
+
+        /* Header */
+        .header {
+            background: var(--white);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 12px 0;
         }
-        .pin-card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 30px rgba(0,0,0,0.15);
-            width: 100%;
-            max-width: 380px;
-            padding: 30px 25px;
-            text-align: center;
-        }
-        .pin-icon { font-size: 50px; margin-bottom: 15px; }
-        .pin-card h1 { color: #075e54; font-size: 20px; margin-bottom: 5px; }
-        .pin-card .subtitle { color: #6c757d; font-size: 13px; margin-bottom: 20px; }
-        .pin-input {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            font-size: 24px;
-            text-align: center;
-            letter-spacing: 15px;
-            margin: 15px 0;
-            direction: ltr;
-        }
-        .pin-input:focus { border-color: #25d366; outline: none; }
-        
-        .connect-page {
-            display: none;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .connect-card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 30px rgba(0,0,0,0.15);
-            width: 100%;
-            max-width: 400px;
-            padding: 30px 25px;
-            text-align: center;
-        }
-        .connect-icon { font-size: 50px; margin-bottom: 15px; }
-        .connect-card h1 { color: #075e54; font-size: 20px; margin-bottom: 5px; }
-        .connect-card .subtitle { color: #6c757d; font-size: 13px; margin-bottom: 20px; }
-        
-        .qr-box {
-            display: none;
-            margin: 15px 0;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
-        }
-        .qr-box img { width: 220px; height: 220px; border-radius: 10px; }
-        .qr-label { color: #075e54; font-size: 14px; font-weight: bold; margin-bottom: 10px; }
-        
-        .status-text {
-            font-size: 14px;
-            color: #075e54;
-            margin: 15px 0;
-            padding: 10px;
-            background: #e8f5e9;
-            border-radius: 8px;
-            display: none;
-        }
-        
-        .btn {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: bold;
-            font-family: inherit;
-            transition: all 0.2s;
-            margin: 5px 0;
-        }
-        .btn-primary { background: #25d366; color: white; }
-        .btn-primary:hover { background: #1eb955; }
-        .btn-dark { background: #075e54; color: white; }
-        .btn-dark:hover { background: #064a42; }
-        .btn-danger { background: #dc3545; color: white; }
-        .btn-danger:hover { background: #c82333; }
-        .btn-sm { padding: 8px 15px; font-size: 13px; width: auto; }
-        
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 20px 0;
-            color: #6c757d;
-            font-size: 13px;
-        }
-        .divider::before, .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: #ddd;
-        }
-        .divider span { margin: 0 10px; }
-        
-        .phone-input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 15px;
-            text-align: center;
-            margin: 5px 0;
-            direction: ltr;
-        }
-        .phone-input:focus { border-color: #25d366; outline: none; }
-        
-        .pairing-code {
-            display: none;
-            margin-top: 15px;
-            padding: 15px;
-            background: #e8f5e9;
-            border-radius: 8px;
-        }
-        .pairing-code .code {
-            font-size: 28px;
-            font-weight: bold;
-            color: #25d366;
-            letter-spacing: 8px;
-            margin: 10px 0;
-        }
-        
-        .dashboard {
-            display: none;
-            max-width: 900px;
+
+        .header-inner {
+            max-width: 1140px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
-        
-        .dash-header {
-            background: #075e54;
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--green), var(--green-dark));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: white;
-            padding: 15px 20px;
-            border-radius: 12px;
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .nav-links {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-            gap: 10px;
+            gap: 25px;
+            list-style: none;
         }
-        .dash-header h1 { font-size: 18px; }
-        .header-actions {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .badge {
-            padding: 6px 15px;
-            border-radius: 15px;
-            font-size: 13px;
-            font-weight: bold;
-            background: #25d366;
-        }
-        
-        .toggle-btn {
-            padding: 8px 20px;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: bold;
-            font-family: inherit;
-        }
-        .toggle-btn.active { background: #25d366; color: white; }
-        .toggle-btn.inactive { background: #dc3545; color: white; }
-        
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            overflow-x: auto;
-            padding: 5px;
-        }
-        .tab {
-            padding: 10px 20px;
-            background: white;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text);
             font-size: 14px;
-            font-weight: bold;
-            color: #075e54;
-            white-space: nowrap;
-            transition: all 0.2s;
-            font-family: inherit;
+            font-weight: 500;
+            transition: color 0.3s;
         }
-        .tab:hover { background: #e8f5e9; }
-        .tab.active { background: #075e54; color: white; }
-        
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            margin-bottom: 15px;
+
+        .nav-links a:hover {
+            color: var(--green);
         }
-        .card h2 { color: #075e54; font-size: 16px; margin-bottom: 15px; }
-        .card h3 { color: #075e54; font-size: 14px; margin-bottom: 10px; }
-        
-        .input, .textarea, select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
+
+        .nav-links a.active {
+            color: var(--green);
+            font-weight: 600;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border: none;
             border-radius: 8px;
             font-size: 14px;
-            font-family: inherit;
-            margin-bottom: 10px;
-        }
-        .textarea { height: 70px; resize: vertical; }
-        
-        .messages {
-            max-height: 250px;
-            overflow-y: auto;
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 10px;
-        }
-        .msg {
-            background: white;
-            padding: 8px;
-            margin-bottom: 5px;
-            border-radius: 8px;
-            border-right: 3px solid #25d366;
-            font-size: 13px;
-        }
-        .msg .sender { font-weight: bold; color: #075e54; }
-        .msg .time { color: #6c757d; font-size: 11px; float: left; }
-        
-        .auto-reply-item, .product-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin-bottom: 5px;
-        }
-        .auto-reply-item .keyword, .product-item .name { font-weight: bold; color: #075e54; }
-        .auto-reply-item .response { color: #6c757d; font-size: 13px; }
-        .product-item .price { color: #ff9800; font-weight: bold; }
-        
-        .business-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-        .business-option {
-            text-align: center;
-            padding: 30px 20px;
-            background: #f8f9fa;
-            border-radius: 12px;
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.3s;
-            border: 2px solid transparent;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
-        .business-option:hover {
-            border-color: #25d366;
-            background: #e8f5e9;
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
         }
-        .business-option .icon { font-size: 40px; margin-bottom: 10px; }
-        .business-option .title { font-weight: bold; color: #075e54; margin-bottom: 5px; }
-        .business-option .desc { font-size: 12px; color: #6c757d; }
-        
-        @media (min-width: 768px) {
-            .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+        .btn-primary:hover {
+            background: #003515;
+            transform: translateY(-1px);
         }
+
+        .btn-green {
+            background: var(--green);
+            color: white;
+        }
+
+        .btn-green:hover {
+            background: var(--green-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--green);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--green-light);
+        }
+
+        /* Hero */
+        .hero {
+            max-width: 1140px;
+            margin: 0 auto;
+            padding: 60px 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .hero-content h1 {
+            font-size: 42px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+
+        .hero-content .subtitle {
+            font-size: 20px;
+            color: var(--green);
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .hero-content p {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 30px;
+            line-height: 2;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .hero-image {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hero-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 20px;
+        }
+
+        .hero-illustration {
+            width: 100%;
+            max-width: 400px;
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #25D36622, #004B1C11);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-illustration .bot-icon {
+            font-size: 120px;
+            color: var(--green);
+            opacity: 0.9;
+        }
+
+        .hero-illustration .float-icon {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .float-1 { background: #25D366; top: 10%; right: 10%; animation-delay: 0s; }
+        .float-2 { background: #3b82f6; bottom: 15%; left: 8%; animation-delay: 1s; }
+        .float-3 { background: #f59e0b; top: 50%; left: 5%; animation-delay: 2s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        /* Section */
+        .section {
+            max-width: 1140px;
+            margin: 0 auto;
+            padding: 50px 20px;
+        }
+
+        .section-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .section-desc {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 16px;
+            max-width: 700px;
+            margin: 0 auto 40px;
+            line-height: 2;
+        }
+
+        /* Feature Cards */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 30px 24px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+            border: 1px solid #e8f5e9;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--green);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 15px;
+            background: linear-gradient(135deg, #25D36633, #004B1C11);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: var(--green-dark);
+        }
+
+        .feature-card h3 {
+            font-size: 16px;
+            color: var(--primary);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .feature-card p {
+            font-size: 13px;
+            color: var(--text-light);
+            line-height: 1.7;
+        }
+
+        /* Comparison Table */
+        .comparison-wrapper {
+            background: white;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .comparison-table th {
+            background: var(--green);
+            color: white;
+            padding: 14px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .comparison-table td {
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid #d6f5d6;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .comparison-table tbody tr:nth-child(even) {
+            background: #f9fefb;
+        }
+
+        .comparison-table tbody tr:nth-child(odd) {
+            background: #f1fcf5;
+        }
+
+        .icon-check { color: #25D366; font-size: 18px; }
+        .icon-ban { color: #d9534f; font-size: 18px; }
+
+        /* Login Card */
+        .login-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            max-width: 420px;
+            margin: 0 auto;
+            padding: 40px 35px;
+            text-align: center;
+        }
+
+        .login-card .icon {
+            font-size: 50px;
+            margin-bottom: 15px;
+        }
+
+        .login-card h2 {
+            color: var(--primary);
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+
+        .login-card .subtitle {
+            color: var(--text-light);
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+            text-align: right;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: var(--text);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--green);
+        }
+
+        .pin-input {
+            text-align: center;
+            letter-spacing: 10px;
+            font-size: 22px;
+            direction: ltr;
+        }
+
+        /* Dashboard */
+        .dashboard {
+            display: none;
+            max-width: 1140px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .status-connected {
+            background: #e8f7e8;
+            color: #1ebe57;
+        }
+
+        .status-disconnected {
+            background: #fee;
+            color: #d9534f;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .dash-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid #e8f5e9;
+        }
+
+        .dash-card h3 {
+            color: var(--primary);
+            font-size: 16px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dash-card .card-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--green-light);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--green-dark);
+        }
+
+        /* Connect Page */
+        .connect-page {
+            display: none;
+            max-width: 1140px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        .connect-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            max-width: 450px;
+            margin: 0 auto;
+            padding: 40px 35px;
+            text-align: center;
+        }
+
+        .qr-box {
+            display: none;
+            margin: 20px 0;
+            padding: 20px;
+            background: var(--green-light);
+            border-radius: var(--radius);
+        }
+
+        .qr-box img {
+            width: 220px;
+            height: 220px;
+            border-radius: 10px;
+        }
+
+        .qr-label {
+            color: var(--primary);
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .status-text {
+            font-size: 14px;
+            color: var(--green-dark);
+            display: none;
+            margin: 10px 0;
+        }
+
+        /* Toggle Switch */
+        .toggle {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            display: inline-block;
+        }
+
+        .toggle input { display: none; }
+
+        .toggle-slider {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #ccc;
+            border-radius: 26px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .toggle-slider::before {
+            content: "";
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            left: 3px;
+            top: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        .toggle input:checked + .toggle-slider {
+            background: var(--green);
+        }
+
+        .toggle input:checked + .toggle-slider::before {
+            transform: translateX(24px);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--primary);
+            color: #c8d6e0;
+            padding: 40px 20px 20px;
+            margin-top: 50px;
+        }
+
+        .footer-inner {
+            max-width: 1140px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .footer-logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: #a8c0d0;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--green);
+        }
+
+        .footer-copy {
+            font-size: 13px;
+            color: #8aa0b0;
+            padding-top: 20px;
+            border-top: 1px solid #1a5c2e;
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
-            .business-options { grid-template-columns: 1fr; }
+            .hero {
+                grid-template-columns: 1fr;
+                text-align: center;
+                padding: 30px 20px;
+            }
+
+            .hero-content h1 {
+                font-size: 28px;
+            }
+
+            .hero-buttons {
+                justify-content: center;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .section-title {
+                font-size: 22px;
+            }
+
+            .comparison-table th,
+            .comparison-table td {
+                font-size: 12px;
+                padding: 8px 6px;
+            }
         }
+
+        /* Pages */
+        .page { display: none; }
+        .page.active { display: block; }
     </style>
 </head>
 <body>
-    <!-- صفحه PIN -->
-    <div class="pin-page" id="pinPage">
-        <div class="pin-card">
-            <div class="pin-icon">🔐</div>
-            <h1>ورود به داشبورد</h1>
+
+<!-- Header -->
+<header class="header">
+    <div class="header-inner">
+        <a href="#" class="logo">
+            <div class="logo-icon"><i class="fas fa-robot"></i></div>
+            <span class="logo-text">ربات واتساپ</span>
+        </a>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="#" class="active">ربات واتساپ</a></li>
+                <li><a href="#">ارسال پیام انبوه</a></li>
+                <li><a href="#">نرم افزار</a></li>
+                <li><a href="#">وبلاگ</a></li>
+                <li><a href="#">تماس با ما</a></li>
+            </ul>
+        </nav>
+        <a href="#" class="btn btn-primary" onclick="showLogin()">
+            <i class="fas fa-cog"></i> ورود به پنل
+        </a>
+    </div>
+</header>
+
+<!-- Page: Home -->
+<div class="page active" id="homePage">
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>ربات واتساپ هوشمند</h1>
+            <div class="subtitle">نسل جدید ربات واتساپی</div>
+            <p>ربات واتساپ ابزاری حرفه‌ای برای مدیریت و خودکارسازی ارتباط با مشتریان و فروش از طریق واتساپ است. با هوش مصنوعی و API این کار را برای شما سریع و آسان می‌کند.</p>
+            <div class="hero-buttons">
+                <a href="#" class="btn btn-green" onclick="showLogin()">
+                    <i class="fas fa-rocket"></i> تست رایگان
+                </a>
+                <a href="#features" class="btn btn-outline">مشاهده امکانات</a>
+                <a href="#" class="btn btn-outline" onclick="showLogin()">
+                    <i class="fas fa-play"></i> فیلم معرفی
+                </a>
+            </div>
+        </div>
+        <div class="hero-image">
+            <div class="hero-illustration">
+                <i class="fas fa-robot bot-icon"></i>
+                <div class="float-icon float-1"><i class="fab fa-whatsapp"></i></div>
+                <div class="float-icon float-2"><i class="fas fa-bullhorn"></i></div>
+                <div class="float-icon float-3"><i class="fas fa-coins"></i></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section" id="features">
+        <h2 class="section-title">ویژگی‌های کلیدی</h2>
+        <p class="section-desc">ربات واتساپ با امکانات پیشرفته تجربه کاربری را به طور چشمگیری افزایش می‌دهد</p>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-brain"></i></div>
+                <h3>اتصال به هوش مصنوعی</h3>
+                <p>پاسخگویی هوشمند و خودکار به مشتریان</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-bolt"></i></div>
+                <h3>فعالیت ۲۴ ساعته</h3>
+                <p>بدون نیاز به برق و اینترنت دائمی</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-bullhorn"></i></div>
+                <h3>ارسال پیام انبوه</h3>
+                <p>ارسال پیام هدفمند و شخصی سازی شده</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-database"></i></div>
+                <h3>بانک اطلاعاتی</h3>
+                <p>مدیریت مخاطبین و گزارش‌گیری دقیق</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-mobile-alt"></i></div>
+                <h3>دسترسی از موبایل</h3>
+                <p>از هر دستگاه و در هر زمان</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+                <h3>گزارش‌گیری دقیق</h3>
+                <p>آمار کامل از تعاملات و فروش</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-plug"></i></div>
+                <h3>یکپارچه‌سازی API</h3>
+                <p>اتصال به CRM و سیستم‌های دیگر</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+                <h3>امنیت داده</h3>
+                <p>مطابق استانداردهای واتساپ</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Table -->
+    <section class="section">
+        <h2 class="section-title">ربات ابری در مقابل نرم افزار</h2>
+        <p class="section-desc">مقایسه ربات واتساپ ابری با نرم افزار ربات واتساپ</p>
+        <div class="comparison-wrapper">
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>ویژگی</th>
+                        <th>ربات ابری</th>
+                        <th>نرم افزار</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>عدم نیاز به اتصال دائمی</td>
+                        <td><i class="fas fa-check icon-check"></i></td>
+                        <td><i class="fas fa-times icon-ban"></i></td>
+                    </tr>
+                    <tr>
+                        <td>پشتیبانی از AI</td>
+                        <td><i class="fas fa-check icon-check"></i></td>
+                        <td><i class="fas fa-times icon-ban"></i></td>
+                    </tr>
+                    <tr>
+                        <td>دسترسی از موبایل</td>
+                        <td><i class="fas fa-check icon-check"></i></td>
+                        <td><i class="fas fa-times icon-ban"></i></td>
+                    </tr>
+                    <tr>
+                        <td>مدیریت کمپین</td>
+                        <td><i class="fas fa-check icon-check"></i></td>
+                        <td><i class="fas fa-times icon-ban"></i></td>
+                    </tr>
+                    <tr>
+                        <td>دسترسی چند کاربره</td>
+                        <td><i class="fas fa-check icon-check"></i></td>
+                        <td><i class="fas fa-times icon-ban"></i></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="section" style="text-align:center;">
+        <h2 class="section-title">همین حالا رایگان امتحان کنید</h2>
+        <p class="section-desc">بدون نیاز به نصب، در چند ثانیه ربات را فعال کنید</p>
+        <a href="#" class="btn btn-green" onclick="showLogin()" style="font-size:16px; padding:14px 36px;">
+            <i class="fas fa-rocket"></i> فعال‌سازی رایگان
+        </a>
+    </section>
+</div>
+
+<!-- Page: Login (PIN) -->
+<div class="page" id="loginPage">
+    <div style="padding: 60px 20px;">
+        <div class="login-card">
+            <div class="icon" style="color: var(--primary);"><i class="fas fa-lock"></i></div>
+            <h2>ورود به پنل</h2>
             <p class="subtitle">PIN خود را وارد کنید</p>
-            <input type="password" class="pin-input" id="pinInput" maxlength="6" placeholder="••••" inputmode="numeric">
-            <button class="btn btn-primary" onclick="verifyPin()">ورود</button>
+            <div class="form-group">
+                <input type="password" class="form-input pin-input" id="pinInput" maxlength="6" placeholder="••••" inputmode="numeric" onkeypress="if(event.key==='Enter') verifyPin()">
+            </div>
+            <button class="btn btn-green" style="width:100%; justify-content:center; padding:14px;" onclick="verifyPin()">ورود</button>
         </div>
     </div>
-    
-    <!-- صفحه اتصال -->
-    <div class="connect-page" id="connectPage">
+</div>
+
+<!-- Page: Connect -->
+<div class="page" id="connectPage">
+    <div class="connect-page">
         <div class="connect-card">
-            <div class="connect-icon">💬</div>
-            <h1>اتصال به واتساپ</h1>
-            <p class="subtitle">برای شروع، یکی از روش‌های زیر را انتخاب کنید</p>
+            <div style="font-size:50px; margin-bottom:15px;"><i class="fab fa-whatsapp" style="color:var(--green);"></i></div>
+            <h2 style="color:var(--primary); font-size:20px; margin-bottom:8px;">اتصال به واتساپ</h2>
+            <p style="color:var(--text-light); font-size:14px; margin-bottom:20px;">برای شروع، یکی از روش‌های زیر را انتخاب کنید</p>
             
             <div class="status-text" id="statusText"></div>
             
             <div class="qr-box" id="qrBox">
-                <p class="qr-label">📱 QR Code را اسکن کنید</p>
+                <p class="qr-label"><i class="fas fa-mobile-screen"></i> QR Code را اسکن کنید</p>
                 <div id="qrContainer"></div>
             </div>
-            
-            <button class="btn btn-primary" onclick="connect()">🔌 اتصال با QR Code</button>
-            
-            <div class="divider"><span>یا</span></div>
-            
-            <input type="tel" class="phone-input" id="phoneNumber" placeholder="93xxxxxxxxx" maxlength="12" dir="ltr">
-            <button class="btn btn-dark" onclick="connectWithPhone()">📲 اتصال با شماره</button>
-            
-            <div class="pairing-code" id="pairingBox">
-                <p>کد اتصال:</p>
-                <div class="code" id="pairingCode"></div>
-                <p style="font-size: 12px; color: #6c757d;">این کد را در واتساپ وارد کنید</p>
+
+            <button class="btn btn-green" style="width:100%; justify-content:center; padding:14px; margin-bottom:15px;" onclick="connect()">
+                <i class="fas fa-plug"></i> اتصال با QR Code
+            </button>
+
+            <div style="text-align:center; margin:15px 0; color:var(--text-light); font-size:14px;">یا</div>
+
+            <div class="form-group">
+                <input type="tel" class="form-input" id="phoneNumber" placeholder="93xxxxxxxx" style="text-align:center; direction:ltr;" dir="ltr">
+            </div>
+            <button class="btn btn-primary" style="width:100%; justify-content:center; padding:14px;" onclick="connectWithPhone()">
+                <i class="fas fa-phone"></i> اتصال با شماره
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Page: Dashboard -->
+<div class="page" id="dashboardPage">
+    <div class="dashboard">
+        <div class="dashboard-header">
+            <h2 style="color:var(--primary); font-size:22px;">پنل مدیریت</h2>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <span class="status-badge status-connected" id="connStatus">
+                    <i class="fas fa-circle" style="font-size:8px;"></i> متصل
+                </span>
+                <button class="btn btn-outline" style="font-size:13px; padding:8px 16px;" onclick="disconnect()">
+                    <i class="fas fa-power-off"></i> قطع اتصال
+                </button>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Bot Toggle -->
+            <div class="dash-card">
+                <h3><div class="card-icon"><i class="fas fa-power-off"></i></div> وضعیت ربات</h3>
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0;">
+                    <span style="font-size:14px;">ربات فعال است</span>
+                    <label class="toggle">
+                        <input type="checkbox" id="botToggle" checked onchange="toggleBot()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Auto Reply -->
+            <div class="dash-card">
+                <h3><div class="card-icon"><i class="fas fa-reply"></i></div> پاسخ خودکار</h3>
+                <div class="form-group" style="margin-top:12px;">
+                    <input type="text" class="form-input" id="replyKeyword" placeholder="کلمه کلیدی" style="font-size:13px;">
+                </div>
+                <div class="form-group">
+                    <input type="text" class="form-input" id="replyText" placeholder="پاسخ" style="font-size:13px;">
+                </div>
+                <button class="btn btn-green" style="width:100%; justify-content:center; font-size:13px; padding:10px;" onclick="addReply()">افزودن</button>
+                <div id="repliesList" style="margin-top:12px; font-size:13px;"></div>
+            </div>
+
+            <!-- Products -->
+            <div class="dash-card">
+                <h3><div class="card-icon"><i class="fas fa-shopping-bag"></i></div> فروشگاه</h3>
+                <div class="form-group" style="margin-top:12px;">
+                    <input type="text" class="form-input" id="prodName" placeholder="نام محصول" style="font-size:13px;">
+                </div>
+                <div class="form-group">
+                    <input type="text" class="form-input" id="prodPrice" placeholder="قیمت" style="font-size:13px;">
+                </div>
+                <button class="btn btn-green" style="width:100%; justify-content:center; font-size:13px; padding:10px;" onclick="addProduct()">افزودن محصول</button>
+                <div id="productsList" style="margin-top:12px; font-size:13px;"></div>
+            </div>
+
+            <!-- Check Receipt -->
+            <div class="dash-card">
+                <h3><div class="card-icon"><i class="fas fa-file-invoice"></i></div> بررسی فیش</h3>
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0;">
+                    <span style="font-size:14px;">فعال</span>
+                    <label class="toggle">
+                        <input type="checkbox" id="checkToggle" onchange="toggleCheck()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>گروه مبدأ</label>
+                    <select class="form-input" id="groupSelect" style="font-size:13px;"></select>
+                </div>
+                <div class="form-group">
+                    <label>شماره مقصد</label>
+                    <input type="text" class="form-input" id="targetNumber" placeholder="93xxxxxxxx" style="font-size:13px; direction:ltr;" dir="ltr">
+                </div>
+                <button class="btn btn-green" style="width:100%; justify-content:center; font-size:13px; padding:10px;" onclick="saveCheckConfig()">ذخیره</button>
+            </div>
+
+            <!-- Messages Log -->
+            <div class="dash-card" style="grid-column: span 2;">
+                <h3><div class="card-icon"><i class="fas fa-inbox"></i></div> پیام‌های دریافتی</h3>
+                <div id="messagesLog" style="max-height:300px; overflow-y:auto; font-size:13px;">
+                    <p style="color:var(--text-light); text-align:center; padding:20px;">پیامی دریافت نشده</p>
+                </div>
+            </div>
+
+            <!-- PIN Change -->
+            <div class="dash-card">
+                <h3><div class="card-icon"><i class="fas fa-key"></i></div> تغییر PIN</h3>
+                <div class="form-group" style="margin-top:12px;">
+                    <input type="password" class="form-input" id="oldPin" placeholder="PIN فعلی" style="font-size:13px;" dir="ltr">
+                </div>
+                <div class="form-group">
+                    <input type="password" class="form-input" id="newPin" placeholder="PIN جدید" style="font-size:13px;" dir="ltr">
+                </div>
+                <button class="btn btn-outline" style="width:100%; justify-content:center; font-size:13px; padding:10px;" onclick="changePin()">تغییر PIN</button>
             </div>
         </div>
     </div>
-    
-    <!-- داشبورد -->
-    <div class="dashboard" id="dashboard">
-        <div class="dash-header">
-            <h1>🤖 داشبورد ربات</h1>
-            <div class="header-actions">
-                <button class="toggle-btn active" id="botToggleBtn" onclick="toggleBot()">ربات روشن ✅</button>
-                <span class="badge">متصل</span>
-            </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="footer-inner">
+        <div class="footer-logo">ربات واتساپ</div>
+        <div class="footer-links">
+            <a href="#">ربات واتساپ</a>
+            <a href="#">ارسال پیام انبوه</a>
+            <a href="#">قیمت‌ها</a>
+            <a href="#">وبلاگ</a>
+            <a href="#">تماس با ما</a>
         </div>
-        
-        <div class="tabs">
-            <button class="tab active" onclick="switchTab('home')">🏠 خانه</button>
-            <button class="tab" onclick="switchTab('send')">📤 ارسال پیام</button>
-            <button class="tab" onclick="switchTab('autoreply')">🤖 پاسخ خودکار</button>
-            <button class="tab" onclick="switchTab('business')">💼 کسب و کار</button>
-            <button class="tab" onclick="switchTab('settings')">⚙️ تنظیمات</button>
-        </div>
-        
-        <!-- خانه -->
-        <div class="tab-content active" id="tab-home">
-            <div class="grid-2">
-                <div class="card">
-                    <h2>📋 پیام‌های دریافتی</h2>
-                    <div class="messages" id="messagesLog">
-                        <p style="color: #6c757d; font-size: 13px;">پیامی نیست</p>
-                    </div>
-                </div>
-                <div class="card">
-                    <h2>📊 آمار</h2>
-                    <p>پیام‌های دریافتی: <span id="msgCount">0</span></p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- ارسال پیام -->
-        <div class="tab-content" id="tab-send">
-            <div class="card">
-                <h2>📤 ارسال پیام جدید</h2>
-                <input type="text" class="input" id="number" placeholder="شماره مقصد (93xxxxxxxxx)" dir="ltr">
-                <textarea class="textarea" id="message" placeholder="متن پیام..."></textarea>
-                <button class="btn btn-primary" onclick="sendMessage()">ارسال پیام</button>
-            </div>
-        </div>
-        
-        <!-- پاسخ خودکار -->
-        <div class="tab-content" id="tab-autoreply">
-            <div class="card">
-                <h2>🤖 تنظیم پاسخ خودکار</h2>
-                <h3>افزودن پاسخ جدید</h3>
-                <input type="text" class="input" id="keyword" placeholder="کلمه کلیدی (مثلاً: سلام)">
-                <textarea class="textarea" id="autoResponse" placeholder="پاسخ خودکار..."></textarea>
-                <button class="btn btn-primary" onclick="addAutoReply()">➕ افزودن</button>
-            </div>
-            
-            <div class="card">
-                <h2>📋 پاسخ‌های فعال</h2>
-                <div id="autoReplyList">
-                    <p style="color: #6c757d; font-size: 13px;">پاسخی تنظیم نشده</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- کسب و کار -->
-        <div class="tab-content" id="tab-business">
-            <div class="card">
-                <h2>💼 کسب و کار</h2>
-                <p style="color: #6c757d; margin-bottom: 15px;">نوع کسب و کار خود را انتخاب کنید</p>
-                
-                <div class="business-options">
-                    <div class="business-option" onclick="showCheckReceipt()">
-                        <div class="icon">💱</div>
-                        <div class="title">چک فیش</div>
-                        <div class="desc">مدیریت فیش‌های واریزی</div>
-                    </div>
-                    <div class="business-option" onclick="showShop()">
-                        <div class="icon">🛍️</div>
-                        <div class="title">فروشگاه</div>
-                        <div class="desc">مدیریت محصولات و فروش</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- بخش چک فیش -->
-            <div class="card" id="checkSection" style="display: none;">
-                <h2>💱 چک فیش</h2>
-                
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: bold;">وضعیت:</label>
-                    <button class="toggle-btn inactive" id="checkToggleBtn" onclick="toggleCheck()">غیرفعال ❌</button>
-                </div>
-                
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">گروه دریافت فیش‌ها:</label>
-                    <select id="groupSelect" class="input">
-                        <option value="">انتخاب گروه...</option>
-                    </select>
-                </div>
-                
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">شماره صاحب کارت (تأییدکننده):</label>
-                    <input type="tel" class="input" id="targetNumber" placeholder="مثلاً: 93xxxxxxxxx" dir="ltr" maxlength="15">
-                </div>
-                
-                <button class="btn btn-primary" onclick="saveCheckConfig()">💾 ذخیره تنظیمات</button>
-            </div>
-            
-            <!-- بخش فروشگاه -->
-            <div class="card" id="shopSection" style="display: none;">
-                <h2>🛍️ مدیریت فروشگاه</h2>
-                
-                <h3>افزودن محصول جدید</h3>
-                <input type="text" class="input" id="productName" placeholder="نام محصول">
-                <div class="grid-2">
-                    <input type="number" class="input" id="productPrice" placeholder="قیمت">
-                    <input type="text" class="input" id="productDesc" placeholder="توضیحات (اختیاری)">
-                </div>
-                <button class="btn btn-primary" onclick="addProduct()">➕ افزودن محصول</button>
-                
-                <h3 style="margin-top: 15px;">محصولات</h3>
-                <div id="productsList">
-                    <p style="color: #6c757d; font-size: 13px;">محصولی ثبت نشده</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- تنظیمات -->
-        <div class="tab-content" id="tab-settings">
-            <div class="card">
-                <h2>🔐 تغییر PIN</h2>
-                <input type="password" class="input" id="oldPin" placeholder="PIN فعلی" maxlength="6">
-                <input type="password" class="input" id="newPin" placeholder="PIN جدید" maxlength="6">
-                <button class="btn btn-dark" onclick="changePin()">تغییر PIN</button>
-            </div>
-            
-            <div class="card">
-                <h2>❌ قطع اتصال</h2>
-                <button class="btn btn-danger" onclick="disconnect()">قطع اتصال از واتساپ</button>
-            </div>
-        </div>
+        <div class="footer-copy">تمام حقوق محفوظ است</div>
     </div>
-    
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        const socket = io();
-        let msgCount = 0;
-        let checkActive = false;
-        let botEnabled = true;
-        
-        document.getElementById('pinInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') verifyPin();
+</footer>
+
+<script>
+    const API = ''; // Same origin
+    let socket = io();
+
+    // Page Navigation
+    function showPage(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function showLogin() { showPage('loginPage'); }
+    function showConnect() { showPage('connectPage'); }
+    function showDashboard() { showPage('dashboardPage'); }
+
+    // PIN Login
+    function verifyPin() {
+        const pin = document.getElementById('pinInput').value;
+        fetch(API + '/verify-pin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pin })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('pinInput').value = '';
+                checkConnection();
+                loadReplies();
+                loadProducts();
+            } else {
+                alert('PIN اشتباه است');
+                document.getElementById('pinInput').value = '';
+            }
         });
-        
-        function verifyPin() {
-            const pin = document.getElementById('pinInput').value;
-            
-            fetch('/verify-pin', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pin })
-            })
+    }
+
+    function checkConnection() {
+        fetch(API + '/status')
             .then(r => r.json())
             .then(data => {
-                if (data.success) {
-                    checkConnection();
-                    loadAutoReplies();
-                    loadProducts();
-                    loadBotStatus();
-                } else {
-                    alert('❌ PIN اشتباه است');
-                    document.getElementById('pinInput').value = '';
+                if (data.status === 'connected') showDashboard();
+                else showConnect();
+            });
+    }
+
+    // Connect
+    function connect() {
+        document.getElementById('statusText').style.display = 'block';
+        document.getElementById('statusText').textContent = 'در حال اتصال...';
+        document.getElementById('qrBox').style.display = 'block';
+        document.getElementById('qrContainer').innerHTML = '<p style="color:#6c757d;">در حال دریافت QR...</p>';
+        fetch(API + '/connect', { method: 'POST' });
+    }
+
+    function connectWithPhone() {
+        const phone = document.getElementById('phoneNumber').value;
+        if (!phone) return alert('شماره را وارد کنید');
+        fetch(API + '/connect-phone', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('statusText').style.display = 'block';
+                document.getElementById('statusText').textContent = 'کد: ' + data.code;
+            } else alert('خطا: ' + (data.message || ''));
+        });
+    }
+
+    function disconnect() {
+        fetch(API + '/disconnect', { method: 'POST' })
+            .then(r => r.json())
+            .then(() => { showConnect(); });
+    }
+
+    // Bot Toggle
+    function toggleBot() {
+        const enabled = document.getElementById('botToggle').checked;
+        fetch(API + '/toggle-bot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enabled })
+        });
+    }
+
+    // Auto Reply
+    function addReply() {
+        const keyword = document.getElementById('replyKeyword').value;
+        const response = document.getElementById('replyText').value;
+        if (!keyword || !response) return;
+        fetch(API + '/add-auto-reply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ keyword, response })
+        }).then(() => {
+            document.getElementById('replyKeyword').value = '';
+            document.getElementById('replyText').value = '';
+            loadReplies();
+        });
+    }
+
+    function loadReplies() {
+        fetch(API + '/get-auto-replies')
+            .then(r => r.json())
+            .then(data => {
+                const list = document.getElementById('repliesList');
+                if (data.replies.length === 0) {
+                    list.innerHTML = '<p style="color:#999;">پاسخی ثبت نشده</p>';
+                    return;
                 }
+                list.innerHTML = data.replies.map(r =>
+                    `<div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #eee;">
+                        <span>${r.keyword} → ${r.response}</span>
+                        <a href="#" onclick="delReply('${r.keyword}');return false;" style="color:#d9534f;"><i class="fas fa-trash"></i></a>
+                    </div>`
+                ).join('');
             });
-        }
-        
-        function checkConnection() {
-            fetch('/status')
-                .then(r => r.json())
-                .then(data => {
-                    if (data.status === 'connected') {
-                        showDashboard();
-                    } else {
-                        showConnectPage();
-                    }
-                });
-        }
-        
-        function showConnectPage() {
-            document.getElementById('pinPage').style.display = 'none';
-            document.getElementById('connectPage').style.display = 'flex';
-            document.getElementById('dashboard').style.display = 'none';
-        }
-        
-        function showDashboard() {
-            document.getElementById('pinPage').style.display = 'none';
-            document.getElementById('connectPage').style.display = 'none';
-            document.getElementById('dashboard').style.display = 'block';
-        }
-        
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.getElementById('tab-' + tabName).classList.add('active');
-            event.target.classList.add('active');
-        }
-        
-        // 🔌 خاموش/روشن کل ربات
-        async function loadBotStatus() {
-            const res = await fetch('/get-bot-status');
-            const data = await res.json();
-            botEnabled = data.enabled;
-            updateBotToggleBtn();
-        }
-        
-        function updateBotToggleBtn() {
-            const btn = document.getElementById('botToggleBtn');
-            if (botEnabled) {
-                btn.textContent = 'ربات روشن ✅';
-                btn.className = 'toggle-btn active';
-            } else {
-                btn.textContent = 'ربات خاموش ❌';
-                btn.className = 'toggle-btn inactive';
+    }
+
+    function delReply(keyword) {
+        fetch(API + '/delete-auto-reply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ keyword })
+        }).then(() => loadReplies());
+    }
+
+    // Products
+    function addProduct() {
+        const name = document.getElementById('prodName').value;
+        const price = document.getElementById('prodPrice').value;
+        if (!name || !price) return;
+        fetch(API + '/add-product', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, price })
+        }).then(() => {
+            document.getElementById('prodName').value = '';
+            document.getElementById('prodPrice').value = '';
+            loadProducts();
+        });
+    }
+
+    function loadProducts() {
+        fetch(API + '/get-products')
+            .then(r => r.json())
+            .then(data => {
+                const list = document.getElementById('productsList');
+                if (data.products.length === 0) {
+                    list.innerHTML = '<p style="color:#999;">محصولی ثبت نشده</p>';
+                    return;
+                }
+                list.innerHTML = data.products.map(p =>
+                    `<div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #eee;">
+                        <span>${p.name} - ${p.price}</span>
+                        <a href="#" onclick="delProduct('${p.name}');return false;" style="color:#d9534f;"><i class="fas fa-trash"></i></a>
+                    </div>`
+                ).join('');
+            });
+    }
+
+    function delProduct(name) {
+        fetch(API + '/delete-product', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name })
+        }).then(() => loadProducts());
+    }
+
+    // Check Receipt
+    function toggleCheck() {
+        const active = document.getElementById('checkToggle').checked;
+        fetch(API + '/toggle-check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ active })
+        });
+    }
+
+    function loadGroups() {
+        fetch(API + '/get-groups')
+            .then(r => r.json())
+            .then(data => {
+                const sel = document.getElementById('groupSelect');
+                sel.innerHTML = '<option value="">انتخاب گروه</option>' +
+                    data.groups.map(g => `<option value="${g.jid}">${g.name}</option>`).join('');
+            });
+    }
+
+    function saveCheckConfig() {
+        const active = document.getElementById('checkToggle').checked;
+        const groupJid = document.getElementById('groupSelect').value;
+        const targetJid = document.getElementById('targetNumber').value;
+        fetch(API + '/save-check-config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ active, groupJid, targetJid })
+        }).then(r => r.json()).then(data => alert(data.success ? 'ذخیره شد' : 'خطا'));
+    }
+
+    // Change PIN
+    function changePin() {
+        const oldPin = document.getElementById('oldPin').value;
+        const newPin = document.getElementById('newPin').value;
+        fetch(API + '/change-pin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ oldPin, newPin })
+        })
+        .then(r => r.json())
+        .then(data => {
+            alert(data.success ? 'PIN تغییر کرد' : (data.message || 'خطا'));
+            if (data.success) {
+                document.getElementById('oldPin').value = '';
+                document.getElementById('newPin').value = '';
             }
+        });
+    }
+
+    // Socket Events
+    socket.on('qr', (data) => {
+        if (document.getElementById('qrBox').style.display === 'block') {
+            document.getElementById('qrContainer').innerHTML = `<img src="${data.qr}">`;
         }
-        
-        async function toggleBot() {
-            botEnabled = !botEnabled;
-            updateBotToggleBtn();
-            await fetch('/toggle-bot', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ enabled: botEnabled })
-            });
-        }
-        
-        // 💱 چک فیش
-        function showCheckReceipt() {
-            document.getElementById('checkSection').style.display = 'block';
-            document.getElementById('shopSection').style.display = 'none';
-            loadCheckConfig();
+    });
+
+    socket.on('status', (data) => {
+        if (data.status === 'connected') {
+            showDashboard();
             loadGroups();
+            loadCheckConfig();
         }
-        
-        function showShop() {
-            document.getElementById('shopSection').style.display = 'block';
-            document.getElementById('checkSection').style.display = 'none';
-        }
-        
-        async function loadCheckConfig() {
-            const res = await fetch('/get-check-config');
-            const config = await res.json();
-            checkActive = config.active;
-            updateCheckToggleBtn();
-            document.getElementById('groupSelect').value = config.groupJid || '';
-            if (config.targetJid) {
-                document.getElementById('targetNumber').value = config.targetJid.replace('@c.us', '');
-            }
-        }
-        
-        function updateCheckToggleBtn() {
-            const btn = document.getElementById('checkToggleBtn');
-            if (checkActive) {
-                btn.textContent = 'فعال ✅';
-                btn.className = 'toggle-btn active';
-            } else {
-                btn.textContent = 'غیرفعال ❌';
-                btn.className = 'toggle-btn inactive';
-            }
-        }
-        
-        async function toggleCheck() {
-            checkActive = !checkActive;
-            updateCheckToggleBtn();
-            await fetch('/toggle-check', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ active: checkActive })
-            });
-        }
-        
-        async function loadGroups() {
-            const groupsRes = await fetch('/get-groups');
-            const groupsData = await groupsRes.json();
-            const groupSelect = document.getElementById('groupSelect');
-            groupSelect.innerHTML = '<option value="">انتخاب گروه...</option>';
-            if (groupsData.groups) {
-                groupsData.groups.forEach(g => {
-                    const opt = document.createElement('option');
-                    opt.value = g.jid;
-                    opt.textContent = g.name;
-                    groupSelect.appendChild(opt);
-                });
-            }
-            const configRes = await fetch('/get-check-config');
-            const config = await configRes.json();
-            groupSelect.value = config.groupJid || '';
-        }
-        
-        async function saveCheckConfig() {
-            const groupJid = document.getElementById('groupSelect').value;
-            const targetNumber = document.getElementById('targetNumber').value.trim();
-            
-            if (!groupJid) { alert('لطفاً گروه را انتخاب کنید'); return; }
-            if (!targetNumber) { alert('لطفاً شماره صاحب کارت را وارد کنید'); return; }
-            
-            const targetJid = targetNumber.includes('@c.us') ? targetNumber : `${targetNumber}@c.us`;
-            
-            const res = await fetch('/save-check-config', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ active: checkActive, groupJid, targetJid })
-            });
-            const data = await res.json();
-            if (data.success) alert('✅ تنظیمات ذخیره شد');
-        }
-        
-        // 🛍️ فروشگاه
-        function addProduct() {
-            const name = document.getElementById('productName').value;
-            const price = document.getElementById('productPrice').value;
-            const desc = document.getElementById('productDesc').value;
-            
-            if (!name || !price) return alert('نام و قیمت محصول را وارد کنید');
-            
-            fetch('/add-product', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, price, desc })
-            })
+    });
+
+    socket.on('pairing-code', (data) => {
+        document.getElementById('statusText').style.display = 'block';
+        document.getElementById('statusText').textContent = 'کد را در واتساپ وارد کنید: ' + data.code;
+    });
+
+    socket.on('incoming-message', (data) => {
+        const log = document.getElementById('messagesLog');
+        if (log.querySelector('p[style]')) log.innerHTML = '';
+        const div = document.createElement('div');
+        div.style.cssText = 'padding:8px 0; border-bottom:1px solid #eee;';
+        div.innerHTML = `<b>${data.from}</b> <span style="color:#999; font-size:11px;">${data.timestamp}</span><br>${data.message}`;
+        log.appendChild(div);
+        log.scrollTop = log.scrollHeight;
+    });
+
+    // Load check config
+    function loadCheckConfig() {
+        fetch(API + '/get-check-config')
             .then(r => r.json())
             .then(data => {
-                if (data.success) {
-                    alert('✅ محصول اضافه شد');
-                    document.getElementById('productName').value = '';
-                    document.getElementById('productPrice').value = '';
-                    document.getElementById('productDesc').value = '';
-                    loadProducts();
-                }
+                document.getElementById('checkToggle').checked = data.active;
+                if (data.groupJid) document.getElementById('groupSelect').value = data.groupJid;
+                if (data.targetJid) document.getElementById('targetNumber').value = data.targetJid;
             });
-        }
-        
-        function loadProducts() {
-            fetch('/get-products')
-                .then(r => r.json())
-                .then(data => {
-                    const list = document.getElementById('productsList');
-                    if (data.products && data.products.length > 0) {
-                        list.innerHTML = '';
-                        data.products.forEach(product => {
-                            const div = document.createElement('div');
-                            div.className = 'product-item';
-                            div.innerHTML = `
-                                <div>
-                                    <span class="name">${product.name}</span>
-                                    ${product.desc ? `<br><small style="color: #6c757d;">${product.desc}</small>` : ''}
-                                </div>
-                                <span class="price">${product.price}</span>
-                                <button class="btn btn-danger btn-sm" onclick="deleteProduct('${product.name}')">حذف</button>
-                            `;
-                            list.appendChild(div);
-                        });
-                    }
-                });
-        }
-        
-        function deleteProduct(name) {
-            fetch('/delete-product', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name })
-            })
-            .then(r => r.json())
-            .then(data => { if (data.success) loadProducts(); });
-        }
-        
-        // 🤖 پاسخ خودکار
-        function addAutoReply() {
-            const keyword = document.getElementById('keyword').value;
-            const response = document.getElementById('autoResponse').value;
-            
-            if (!keyword || !response) return alert('کلمه کلیدی و پاسخ را وارد کنید');
-            
-            fetch('/add-auto-reply', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ keyword, response })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    alert('✅ پاسخ اضافه شد');
-                    document.getElementById('keyword').value = '';
-                    document.getElementById('autoResponse').value = '';
-                    loadAutoReplies();
-                }
-            });
-        }
-        
-        function loadAutoReplies() {
-            fetch('/get-auto-replies')
-                .then(r => r.json())
-                .then(data => {
-                    const list = document.getElementById('autoReplyList');
-                    if (data.replies && data.replies.length > 0) {
-                        list.innerHTML = '';
-                        data.replies.forEach(reply => {
-                            const div = document.createElement('div');
-                            div.className = 'auto-reply-item';
-                            div.innerHTML = `
-                                <div>
-                                    <span class="keyword">${reply.keyword}</span>
-                                    <span class="response">→ ${reply.response}</span>
-                                </div>
-                                <button class="btn btn-danger btn-sm" onclick="deleteAutoReply('${reply.keyword}')">حذف</button>
-                            `;
-                            list.appendChild(div);
-                        });
-                    }
-                });
-        }
-        
-        function deleteAutoReply(keyword) {
-            fetch('/delete-auto-reply', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ keyword })
-            })
-            .then(r => r.json())
-            .then(data => { if (data.success) loadAutoReplies(); });
-        }
-        
-        // 🔐 PIN
-        function changePin() {
-            const oldPin = document.getElementById('oldPin').value;
-            const newPin = document.getElementById('newPin').value;
-            
-            if (!oldPin || !newPin) return alert('هر دو فیلد را پر کنید');
-            
-            fetch('/change-pin', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ oldPin, newPin })
-            })
-            .then(r => r.json())
-            .then(data => {
-                alert(data.success ? '✅ PIN تغییر کرد' : '❌ ' + data.message);
-                if (data.success) {
-                    document.getElementById('oldPin').value = '';
-                    document.getElementById('newPin').value = '';
-                }
-            });
-        }
-        
-        // Socket Events
-        socket.on('qr', (data) => {
-            if (document.getElementById('qrBox').style.display === 'block') {
-                document.getElementById('qrContainer').innerHTML = `<img src="${data.qr}">`;
-            }
-        });
-        
-        socket.on('status', (data) => {
-            if (data.status === 'connected') showDashboard();
-        });
-        
-        socket.on('pairing-code', (data) => {
-            document.getElementById('pairingBox').style.display = 'block';
-            document.getElementById('pairingCode').textContent = data.code;
-            document.getElementById('statusText').style.display = 'block';
-            document.getElementById('statusText').textContent = 'کد را در واتساپ وارد کنید';
-        });
-        
-        socket.on('incoming-message', (data) => {
-            const log = document.getElementById('messagesLog');
-            if (log.querySelector('p[style]')) log.innerHTML = '';
-            
-            const div = document.createElement('div');
-            div.className = 'msg';
-            div.innerHTML = `<span class="sender">${data.from}</span>
-                            <span class="time">${data.timestamp}</span>
-                            <br>${data.message}`;
-            log.appendChild(div);
-            log.scrollTop = log.scrollHeight;
-            
-            msgCount++;
-            document.getElementById('msgCount').textContent = msgCount;
-        });
-        
-        // Functions
-        function connect() {
-            document.getElementById('statusText').style.display = 'block';
-            document.getElementById('statusText').textContent = 'در حال اتصال...';
-            document.getElementById('qrBox').style.display = 'block';
-            document.getElementById('qrContainer').innerHTML = '<p style="color: #6c757d;">در حال دریافت QR...</p>';
-            fetch('/connect', { method: 'POST' });
-        }
-        
-        function connectWithPhone() {
-            const phone = document.getElementById('phoneNumber').value;
-            if (!phone) return alert('شماره را وارد کنید');
-            
-            fetch('/connect-phone', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (!data.success) alert('خطا: ' + data.message);
-            });
-        }
-        
-        function sendMessage() {
-            const number = document.getElementById('number').value;
-            const message = document.getElementById('message').value;
-            if (!number || !message) return alert('شماره و پیام را وارد کنید');
-            
-            fetch('/send-message', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ number, message })
-            })
-            .then(r => r.json())
-            .then(data => {
-                alert(data.success ? '✅ ارسال شد' : '❌ ' + data.message);
-                if (data.success) document.getElementById('message').value = '';
-            });
-        }
-        
-        function disconnect() {
-            if (confirm('قطع اتصال؟')) {
-                fetch('/disconnect', { method: 'POST' })
-                    .then(() => location.reload());
-            }
-        }
-    </script>
+    }
+</script>
+
 </body>
-    </html>
+</html>
