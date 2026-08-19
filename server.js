@@ -20,7 +20,7 @@ let connectionStatus = 'disconnected';
 let latestQR = null;
 let botEnabled = true;
 
-// 🔐 PIN Configuration
+// 🔐 PIN
 const PIN_FILE = 'pin.json';
 const DEFAULT_PIN = '1234';
 
@@ -29,7 +29,7 @@ function getPIN() {
         if (fs.existsSync(PIN_FILE)) {
             return JSON.parse(fs.readFileSync(PIN_FILE, 'utf8')).pin || DEFAULT_PIN;
         }
-    } catch (error) {}
+    } catch (e) {}
     return DEFAULT_PIN;
 }
 
@@ -37,10 +37,10 @@ function savePIN(newPin) {
     try {
         fs.writeFileSync(PIN_FILE, JSON.stringify({ pin: newPin }));
         return true;
-    } catch (error) { return false; }
+    } catch (e) { return false; }
 }
 
-// 🤖 پاسخ خودکار
+// 🤖 Auto Reply
 const AUTO_REPLY_FILE = 'auto-replies.json';
 function getAutoReplies() {
     try { if (fs.existsSync(AUTO_REPLY_FILE)) return JSON.parse(fs.readFileSync(AUTO_REPLY_FILE, 'utf8')); } catch (e) {}
@@ -50,7 +50,7 @@ function saveAutoReplies(replies) {
     try { fs.writeFileSync(AUTO_REPLY_FILE, JSON.stringify(replies, null, 2)); return true; } catch (e) { return false; }
 }
 
-// 🛍️ فروشگاه
+// 🛍️ Products
 const PRODUCTS_FILE = 'products.json';
 function getProducts() {
     try { if (fs.existsSync(PRODUCTS_FILE)) return JSON.parse(fs.readFileSync(PRODUCTS_FILE, 'utf8')); } catch (e) {}
@@ -60,7 +60,7 @@ function saveProducts(products) {
     try { fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2)); return true; } catch (e) { return false; }
 }
 
-// 💱 چک فیش
+// 💱 Check Receipt
 const CHECK_CONFIG_FILE = 'check-config.json';
 let checkConfig = { active: false, groupJid: '', targetJid: '' };
 let forwardedMap = {};
@@ -76,30 +76,31 @@ function saveCheckConfig() {
     try { fs.writeFileSync(CHECK_CONFIG_FILE, JSON.stringify(checkConfig, null, 2)); } catch (e) {}
 }
 
-// 📦 GitHub Config
-const GITHUB_TOKEN = 'YOUR_GITHUB_TOKEN';
+// 📦 GitHub Session Storage
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN || 'YOUR_GITHUB_TOKEN';
 const GITHUB_REPO = 'bashirtaheri2008/bot-1';
 const GITHUB_FILE = 'session-data.json';
 
 async function saveSessionToGitHub() {
     try {
+        if (!fs.existsSync('auth_session')) return;
         const files = fs.readdirSync('auth_session');
         const sessionData = {};
         for (const file of files) {
             sessionData[file] = fs.readFileSync(`auth_session/${file}`, 'utf8');
         }
         const content = Buffer.from(JSON.stringify(sessionData)).toString('base64');
-        
+
         const checkResponse = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`, {
             headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
         });
-        
+
         let sha = null;
         if (checkResponse.ok) sha = (await checkResponse.json()).sha;
-        
-        const body = { message: 'save session', content: content };
+
+        const body = { message: 'save session', content };
         if (sha) body.sha = sha;
-        
+
         await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`, {
             method: 'PUT',
             headers: {
@@ -109,7 +110,7 @@ async function saveSessionToGitHub() {
             },
             body: JSON.stringify(body)
         });
-    } catch (error) { console.error('خطا در ذخیره session:', error.message); }
+    } catch (e) { console.error('خطا در ذخیره session:', e.message); }
 }
 
 async function loadSessionFromGitHub() {
@@ -118,11 +119,11 @@ async function loadSessionFromGitHub() {
             headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
         });
         if (!response.ok) return false;
-        
+
         const data = await response.json();
         const content = Buffer.from(data.content, 'base64').toString('utf8');
         const sessionData = JSON.parse(content);
-        
+
         if (sessionData && Object.keys(sessionData).length > 0) {
             fs.mkdirSync('auth_session', { recursive: true });
             for (const [file, content] of Object.entries(sessionData)) {
@@ -131,13 +132,10 @@ async function loadSessionFromGitHub() {
             return true;
         }
         return false;
-    } catch (error) { return false; }
+    } catch (e) { return false; }
 }
 
 setInterval(saveSessionToGitHub, 300000);
-
-// 📱 Main Routes
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 // 🔐 PIN Routes
 app.post('/verify-pin', (req, res) => {
@@ -153,10 +151,8 @@ app.post('/change-pin', (req, res) => {
     else res.json({ success: false, message: 'خطا' });
 });
 
-// 🔌 خاموش/روشن کل ربات
-app.get('/get-bot-status', (req, res) => {
-    res.json({ enabled: botEnabled });
-});
+// 🔌 Bot Toggle
+app.get('/get-bot-status', (req, res) => res.json({ enabled: botEnabled }));
 
 app.post('/toggle-bot', (req, res) => {
     botEnabled = !!req.body.enabled;
@@ -267,7 +263,7 @@ app.post('/disconnect', async (req, res) => {
     res.json({ success: true });
 });
 
-// 🤖 شروع ربات
+// 🚀 Bot Start
 async function startBot() {
     if (sock) return;
     try {
@@ -281,7 +277,7 @@ async function startBot() {
 
         sock.ev.on('connection.update', async (update) => {
             const { connection, lastDisconnect, qr } = update;
-            
+
             if (qr) {
                 if (botEnabled) {
                     const qrImage = await qrcode.toDataURL(qr);
@@ -291,14 +287,14 @@ async function startBot() {
                     io.emit('status', { status: 'waiting_qr' });
                 }
             }
-            
+
             if (connection === 'open') {
                 connectionStatus = 'connected';
                 latestQR = null;
                 io.emit('status', { status: 'connected' });
                 setTimeout(saveSessionToGitHub, 5000);
             }
-            
+
             if (connection === 'close') {
                 const statusCode = lastDisconnect?.error?.output?.statusCode;
                 connectionStatus = 'disconnected';
@@ -315,14 +311,12 @@ async function startBot() {
         sock.ev.on('messages.upsert', async ({ messages, type }) => {
             const msg = messages[0];
             if (!msg.message || type !== 'notify') return;
-            
-            // ❌ اگر ربات خاموشه، هیچ کاری نکن
             if (!botEnabled) return;
-            
+
             const from = msg.key.remoteJid;
             const messageType = Object.keys(msg.message)[0];
 
-            // 📥 پیام‌های متنی
+            // Text messages
             if (messageType === 'conversation' || messageType === 'extendedTextMessage') {
                 const text = messageType === 'conversation' ? msg.message.conversation : msg.message.extendedTextMessage.text;
                 io.emit('incoming-message', { from, message: text, timestamp: new Date().toLocaleTimeString('fa-IR') });
@@ -341,7 +335,7 @@ async function startBot() {
                 }
             }
 
-            // 🖼️ دریافت عکس فیش
+            // Receipt image forwarding
             if (messageType === 'imageMessage' && checkConfig.active && from === checkConfig.groupJid) {
                 try {
                     const buffer = await downloadMediaMessage(msg, 'buffer', {});
@@ -353,7 +347,7 @@ async function startBot() {
                 } catch (e) { console.error('خطا در ارسال فیش:', e.message); }
             }
 
-            // 👍 اعمال ریکشن
+            // Reaction forwarding
             if (messageType === 'reaction') {
                 const reaction = msg.message.reaction;
                 const reactedKey = reaction.key;
@@ -375,10 +369,8 @@ async function startBot() {
     }
 }
 
-// بارگذاری تنظیمات
+// Init
 loadCheckConfig();
-
-// 🚀 شروع
 startBot();
 
 const PORT = process.env.PORT || 10000;
